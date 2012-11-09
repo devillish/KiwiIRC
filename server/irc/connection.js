@@ -2,9 +2,10 @@ var net     = require('net'),
     tls     = require('tls'),
     events  = require('events'),
     util    = require('util'),
-    _       = require('underscore');
+    _       = require('underscore'),
+    State   = require('./state.js');
 
-var IrcConnection = function (hostname, port, ssl, nick, user, pass) {
+var IrcConnection = function (hostname, port, ssl, nick, user, pass, client) {
     var that = this;
     events.EventEmitter.call(this);
     
@@ -48,6 +49,8 @@ var IrcConnection = function (hostname, port, ssl, nick, user, pass) {
     this.password = pass;
     this.hold_last = false;
     this.held_data = '';
+    
+    this.state = new State(this, client);
 };
 util.inherits(IrcConnection, events.EventEmitter);
 
