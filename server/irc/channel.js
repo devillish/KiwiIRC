@@ -51,6 +51,15 @@ Channel.prototype.removeMember = function (user) {
     }
 };
 
+Channel.prototype.addMember = function (user) {
+    if (!this.hasMember(user)) {
+        this.members.push(user);
+        user.once('quit', function () {
+            removeOnQuit.call(this, user);
+        }.bind(this));
+    }
+};
+
 var removeOnQuit = function (user) {
     this.removeMember(user);
 };
@@ -65,10 +74,7 @@ Channel.prototype.notice = function (user, message) {
 
 Channel.prototype.join = function (user) {
     if (!this.hasMember(user)) {
-        this.members.push(user);
-        user.once('quit', function () {
-            removeOnQuit.call(this, user);
-        }.bind(this));
+        this.addMember(user);
         this.emit('join', user);
     }
 };
