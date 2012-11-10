@@ -53,8 +53,8 @@ bindUserListeners = function (user) {
         that.client.sendIrcCommand('quit', {server: that.connection.con_num, nick: this.nick, ident: this.ident, hostname: this.host, message: message});
     });
     
-    user.on('away', function (message) {
-        that.client.sendIrcCommand('away', {server: that.connection.con_num, nick: user.nick, away: away, message: message});
+    user.on('away', function (away) {
+        that.client.sendIrcCommand('away', {server: that.connection.con_num, nick: this.nick, away: away});
     });
 };
 
