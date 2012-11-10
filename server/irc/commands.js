@@ -168,14 +168,34 @@ var listeners = {
         var member_list = [];
         var that = this;
         var i = 0;
+        
+        var chan = this.irc_connection.state.getChannel(command.params[2]);
+        
         _.each(members, function (member) {
-            var j, k, modes = [];
+            var j, k, modes = [], start_of_nick = 0, user;
             for (j = 0; j < member.length; j++) {
                 for (k = 0; k < that.irc_connection.options.PREFIX.length; k++) {
                     if (member.charAt(j) === that.irc_connection.options.PREFIX[k].symbol) {
                         modes.push(that.irc_connection.options.PREFIX[k].mode);
+                        start_of_nick = j + 1;
                         i++;
                     }
+                }
+            }
+            if (chan) {
+                if (!chan.expecting_names) {
+                    chan.expecting_names = true;
+                    chan.members = [];
+                    for (var m in chan.modes.prefix_modes) {
+                        chan.modes.prefix_modes[m] = [];
+                    }
+                }
+                user = that.irc_connection.state.getUser(member.substr(start_of_nick));
+                chan.addMember(user);
+                if (modes.length > 0) {
+                    modes.forEach(function (mode) {
+                        chan.modes.prefix_modes[mode].push(user);
+                    });
                 }
             }
             member_list.push({nick: member, modes: modes});
@@ -189,7 +209,11 @@ var listeners = {
             this.client.sendIrcCommand('userlist', {server: this.con_num, users: member_list, channel: command.params[2]});
         }
     },
-    'RPL_ENDOFNAMES':  function (command) {
+    'RPL_ENDOFNAMES': function (command) {
+        var chan = this.irc_connection.state.getChannel(command.params[1]);
+        if (chan) {
+            chan.expecting_names = false;
+        }
         this.client.sendIrcCommand('userlist_end', {server: this.con_num, channel: command.params[1]});
     },
     'RPL_BANLIST': function (command) {

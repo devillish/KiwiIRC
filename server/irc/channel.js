@@ -9,6 +9,8 @@ var Channel = function (name, connection) {
     this.topic = '';
     this.topic_details = {set_by: null, set_at: 0};
     
+    this.expecting_names = false;
+    
     // Set up modes
     this.modes = Object.create(null);
     this.modes.prefix_modes = Object.create(null);
