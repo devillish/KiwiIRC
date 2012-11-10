@@ -306,7 +306,7 @@ var listeners = {
         }
     },
     'NICK': function (command) {
-        this.irc_connection.state.getUser(command.nick).setNick(command.trailing);
+        this.irc_connection.state.getUser(command.nick).setNick(command.trailing || command.params[0]);
     },
     'TOPIC': function (command) {
         var chan = this.irc_connection.state.getChannel(command.params[0]);
