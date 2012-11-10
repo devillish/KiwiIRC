@@ -8,6 +8,7 @@ var irc_numerics = {
     RPL_WHOISUSER:          '311',
     RPL_WHOISSERVER:        '312',
     RPL_WHOISOPERATOR:      '313',
+    RPL_ENDOFWHO:           '315',
     RPL_WHOISIDLE:          '317',
     RPL_ENDOFWHOIS:         '318',
     RPL_WHOISCHANNELS:      '319',
@@ -17,6 +18,7 @@ var irc_numerics = {
     RPL_NOTOPIC:            '331',
     RPL_TOPIC:              '332',
     RPL_TOPICWHOTIME:       '333',
+    RPL_WHOREPLY:           '352',
     RPL_NAMEREPLY:          '353',
     RPL_ENDOFNAMES:         '366',
     RPL_BANLIST:            '367',
@@ -216,6 +218,25 @@ var listeners = {
         }
         this.client.sendIrcCommand('userlist_end', {server: this.con_num, channel: command.params[1]});
     },
+    'RPL_WHOREPLY': function (command) {
+        var trail, chan, user;
+        // "<channel> <user> <host> <server> <nick> ( "H" / "G" > ["*"] [ ( "@" / "+" ) ] :<hopcount> <real name>"
+        trail = command.trailing.split(' ');
+        trail = [trail[0], trail.slice(1).join(' ')];
+        this.client.sendIrcCommand('who_reply', {server: this.con_num, channel: command.params[1], user: command.params[2], host: command.params[3], who_server: command.params[4], nick: command.params[5], flags: command.params[6], hopcount: trail[0], real_name: trail[1]});
+        
+        chan = this.irc_connection.state.getChannel(command.params[1]);
+        if (chan) {
+            user = this.irc_connection.state.getUser(command.params[5]);
+            user.setIdent(command.params[2]);
+            user.setHost(command.params[3]);
+            user.setRealName(trail[1]);
+            user.setAway((command.params[6].indexOf('G') !== -1));
+        }
+    },
+    'RPL_ENDOFWHO': function (command) {
+        this.client.sendIrcCommand('who_reply_end', {server: this.con_num});
+    },
     'RPL_BANLIST': function (command) {
         this.client.sendIrcCommand('banlist', {server: this.con_num, channel: command.params[1], banned: command.params[2], banned_by: command.params[3], banned_at: command.params[4]});
     },
@@ -251,6 +272,9 @@ var listeners = {
         
         if (command.nick === this.nick) {
             this.irc_connection.write('NAMES ' + channel);
+            this.irc_connection.write('WHO ' + channel);
+        } else {
+            this.irc_connection.write('WHO ' + command.nick);
         }
     },
     'PART': function (command) {
