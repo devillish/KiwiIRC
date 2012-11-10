@@ -28,12 +28,12 @@ State.prototype.getChannel = function (name) {
     });
 };
 
-State.prototype.getUser = function (nick, ident, host) {
+State.prototype.getUser = function (nick, ident, host, real_name) {
     var user = _.find(this.users, function (u) {
         return u.nick === nick;
     });
     if (!user) {
-        user = new User(nick, ident, host);
+        user = new User(nick, ident, host, real_name);
         bindUserListeners.call(this, user);
         this.users.push(user);
     }
