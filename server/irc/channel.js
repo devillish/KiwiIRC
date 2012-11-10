@@ -127,9 +127,10 @@ Channel.prototype.mode = function (modes, set_by) {
     }, this);
 };
 
-Channel.prototype.destroy = function () {
+Channel.prototype.dispose = function () {
     this.members = null;
     this.modes = null;
+    this.removeAllListeners();
 };
 
 module.exports = Channel;

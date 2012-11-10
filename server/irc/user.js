@@ -38,4 +38,8 @@ User.prototype.quit = function (message) {
     this.emit('quit', message);
 };
 
+User.prototype.dispose = function () {
+    this.removeAllListeners();
+};
+
 module.exports = User;

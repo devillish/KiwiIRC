@@ -76,8 +76,7 @@ var bindChannelListeners = function (chan) {
     chan.on('part', function (user, message) {
         if (user === that.me) {
             that.channels = _.without(that.channels, this);
-            this.destroy();
-            this.removeAllListeners();
+            this.dispose();
         }
         that.client.sendIrcCommand('part', {server: that.connection.con_num, nick: user.nick, ident: user.ident, hostname: user.host, channel: this.name, message: message});
         cleanUserList.call(that);
@@ -86,8 +85,7 @@ var bindChannelListeners = function (chan) {
     chan.on('kick', function (kickee, kicker, message) {
         if (kickee === that.me) {
             that.channels = _.without(that.channels, this);
-            this.destroy();
-            this.removeAllListeners();
+            this.dispose();
         }
         that.client.sendIrcCommand('kick', {server: that.connection.con_num, kicked: kickee.nick, nick: kicker.nick, ident: kicker.ident, hostname: kicker.host, channel: this.name, message: message});
         cleanUserList.call(that);
