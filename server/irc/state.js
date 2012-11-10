@@ -44,13 +44,13 @@ State.prototype.getUser = function (nick, ident, host, real_name) {
 bindUserListeners = function (user) {
     var that = this;
     user.on('nick', function (new_nick) {
-        that.client.sendIrcCommand('nick', {server: that.connection.con_num, nick: user.nick, ident: user.ident, hostname: user.host, newnick: new_nick});
+        that.client.sendIrcCommand('nick', {server: that.connection.con_num, nick: this.nick, ident: this.ident, hostname: this.host, newnick: new_nick});
     });
     
     user.on('quit', function (message) {
         that.users = _.without(that.users, this);
-        this.removeAllListeners();
-        that.client.sendIrcCommand('quit', {server: that.connection.con_num, nick: user.nick, ident: user.ident, hostname: user.host, message: message});
+        this.dispose();
+        that.client.sendIrcCommand('quit', {server: that.connection.con_num, nick: this.nick, ident: this.ident, hostname: this.host, message: message});
     });
     
     user.on('away', function (message) {
