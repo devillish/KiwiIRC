@@ -107,6 +107,15 @@ _kiwi.view.ServerSelect = function () {
         initialize: function () {
             this.$el = $($('#tmpl_server_select').html());
 
+            // Remove the 'more' link if the server has disabled server changing
+            if (_kiwi.app.server_settings && _kiwi.app.server_settings.connection) {
+                if (!_kiwi.app.server_settings.connection.allow_change) {
+                    this.$el.find('.show_more').remove();
+                    this.$el.addClass('single_server');
+                }
+            }
+
+
             _kiwi.gateway.bind('onconnect', this.networkConnected, this);
             _kiwi.gateway.bind('connecting', this.networkConnecting, this);
 
@@ -239,7 +248,9 @@ _kiwi.view.Panel = Backbone.View.extend({
     tagName: "div",
     className: "messages",
     events: {
-        "click .chan": "chanClick"
+        "click .chan": "chanClick",
+        'mouseenter .msg .nick': 'msgEnter',
+        'mouseleave .msg .nick': 'msgLeave'
     },
 
     initialize: function (options) {
@@ -274,7 +285,13 @@ _kiwi.view.Panel = Backbone.View.extend({
     newMsg: function (msg) {
         // TODO: make sure that the message pane is scrolled to the bottom (Or do we? ~Darren)
         var re, line_msg, $this = this.$el,
-            nick_colour_hex;
+            nick_colour_hex, nick_hex, is_highlight, msg_css_classes = '';
+
+        // Nick highlight detecting
+        if ((new RegExp('\\b' + _kiwi.gateway.get('nick') + '\\b', 'i')).test(msg.msg)) {
+            is_highlight = true;
+            msg_css_classes += ' highlight';
+        }
 
         // Escape any HTML that may be in here
         msg.msg =  $('<div />').text(msg.msg).html();
@@ -321,14 +338,24 @@ _kiwi.view.Panel = Backbone.View.extend({
 
         msg.nick_style = 'color:' + nick_colour_hex + ';';
 
+        // Generate a hex string from the nick to be used as a CSS class name
+        nick_hex = msg.nick_css_class = '';
+        if (msg.nick) {
+            _.map(msg.nick.split(''), function (char) {
+                nick_hex += char.charCodeAt(0).toString(16);
+            });
+            msg_css_classes += ' nick_' + nick_hex;
+        }
+
         // Build up and add the line
-        line_msg = '<div class="msg <%= type %>"><div class="time"><%- time %></div><div class="nick" style="<%= nick_style %>"><%- nick %></div><div class="text" style="<%= style %>"><%= msg %> </div></div>';
+        msg.msg_css_classes = msg_css_classes;
+        line_msg = '<div class="msg <%= type %> <%= msg_css_classes %>"><div class="time"><%- time %></div><div class="nick" style="<%= nick_style %>"><%- nick %></div><div class="text" style="<%= style %>"><%= msg %> </div></div>';
         $this.append(_.template(line_msg, msg));
 
         // Activity/alerts based on the type of new message
         if (msg.type.match(/^action /)) {
             this.alert('action');
-        } else if (msg.msg.indexOf(_kiwi.gateway.get('nick')) > -1) {
+        } else if (is_highlight) {
             _kiwi.app.view.alertWindow('* People are talking!');
             this.alert('highlight');
         } else {
@@ -356,6 +383,39 @@ _kiwi.view.Panel = Backbone.View.extend({
             _kiwi.gateway.join($(event.srcElement).text());
         }
     },
+
+    msgEnter: function (event) {
+        var nick_class;
+
+        // Find a valid class that this element has
+        _.each($(event.currentTarget).parent('.msg').attr('class').split(' '), function (css_class) {
+            if (css_class.match(/^nick_[a-z0-9]+/i)) {
+                nick_class = css_class;
+            }
+        });
+
+        // If no class was found..
+        if (!nick_class) return;
+
+        $('.'+nick_class).addClass('global_nick_highlight');
+    },
+
+    msgLeave: function (event) {
+        var nick_class;
+
+        // Find a valid class that this element has
+        _.each($(event.currentTarget).parent('.msg').attr('class').split(' '), function (css_class) {
+            if (css_class.match(/^nick_[a-z0-9]+/i)) {
+                nick_class = css_class;
+            }
+        });
+
+        // If no class was found..
+        if (!nick_class) return;
+
+        $('.'+nick_class).removeClass('global_nick_highlight');
+    },
+
     show: function () {
         var $this = this.$el;
 
@@ -374,12 +434,12 @@ _kiwi.view.Panel = Backbone.View.extend({
         }
 
         _kiwi.app.view.doLayout();
-
-        this.scrollToBottom();
         this.alert('none');
 
         this.trigger('active', this.model);
         _kiwi.app.panels.trigger('active', this.model);
+
+        this.scrollToBottom(true);
     },
 
 
@@ -420,9 +480,14 @@ _kiwi.view.Panel = Backbone.View.extend({
 
 
     // Scroll to the bottom of the panel
-    scrollToBottom: function () {
-        // TODO: Don't scroll down if we're scrolled up the panel a little
-        this.$container[0].scrollTop = this.$container[0].scrollHeight;
+    scrollToBottom: function (force_down) {
+        // If this isn't the active panel, don't scroll
+        if (this.model !== _kiwi.app.panels.active) return;
+
+        // Don't scroll down if we're scrolled up the panel a little
+        if (force_down || this.$container.scrollTop() + this.$container.height() > this.$el.outerHeight() - 150) {
+            this.$container[0].scrollTop = this.$container[0].scrollHeight;
+        }
     }
 });
 
@@ -773,7 +838,11 @@ _kiwi.view.ControlBox = Backbone.View.extend({
             pre_processed;
         
         // The default command
-        if (command_raw[0] !== '/') {
+        if (command_raw[0] !== '/' || command_raw.substr(0, 2) === '//') {
+            // Remove any slash escaping at the start (ie. //)
+            command_raw = command_raw.replace(/^\/\//, '/');
+
+            // Prepend the default command
             command_raw = '/msg ' + _kiwi.app.panels.active.get('name') + ' ' + command_raw;
         }
 
@@ -941,7 +1010,7 @@ _kiwi.view.Application = Backbone.View.extend({
         });
 
         // Apply the new theme
-        this.$el.addClass('theme_' + (theme_name || 'default'));
+        this.$el.addClass('theme_' + (theme_name || 'relaxed'));
     },
 
 

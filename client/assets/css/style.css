@@ -108,7 +108,7 @@ a img { border:none; }
 .messages {
     overflow-x:wrap;
     border:none; display: none;
-    height: 100%;
+    /*height: 100%;*/
     color: #333333;
 }
 .messages a {
@@ -140,6 +140,10 @@ a img { border:none; }
     border:1px solid #A33F3F; background-color:#D28A8A;
     padding:0.5em; margin-top:1em; margin-bottom:1em; margin-right:2em;
 }
+
+.messages .msg.global_nick_highlight,
+.messages .msg.highlight { background:#D9D9D9; }
+
 
 
 
@@ -202,6 +206,7 @@ a img { border:none; }
     background-color:#FFF;
     height: 1.5em;
     overflow: hidden;
+    outline: none;
 }
 
 
@@ -220,6 +225,7 @@ a img { border:none; }
 .server_select .basic label { font-size:1.3em; margin-top:4px; }
 .server_select .basic { border-bottom: 1px dashed gray; margin-bottom:1em; }
 .server_select .basic .show_more { display: block; width:40px; margin:10px 0 0 0; font-size:0.8em; background: url(../img/more.png) no-repeat right 7px; }
+.server_select.single_server .basic { border:none; }
 .server_select .status { text-align: center; font-weight: bold; padding:1em; }
 .server_select .status .ok {
     border:1px solid #A33F3F; background-color:#D28A8A;
@@ -351,12 +357,13 @@ a img { border:none; }
 #kiwi.theme_cli #controlbox .input_wrap:before { content:"> " }
 #kiwi.theme_cli #controlbox .input { background:none; border:none; border-radius: none; }
 #kiwi.theme_cli #controlbox .input .nick { line-height:1.7em; padding:0; }
-#kiwi.theme_cli #controlbox .input .inp { background:transparent; color:#909090; font-size:1.3em; width:92%; }
+#kiwi.theme_cli #controlbox .input .inp { background:transparent; color:#909090; font-size:1.3em; width:92%; display:inline; }
 /* #kiwi.theme_cli #controlbox .input .inp:before { content:">"; } */
 
 #kiwi.theme_cli #topic { background:#111111; border-bottom:1px solid #444444; border-top:1px solid #444444; }
-#kiwi.theme_cli #topic input { background:transparent; color:#6d6d6d; border:none; outline:none; height:1.5em; }
+#kiwi.theme_cli #topic div { background:transparent; color:#6d6d6d; border:none; outline:none; height:1.5em; }
 
+#kiwi.theme_cli #memberlists { background:#222222; }
 #kiwi.theme_cli #memberlists ul li a.nick { color:#6d6d6d; }
 
 #kiwi.theme_cli .messages .msg > div { color:#6d6d6d; font-family: Inconsolata, Consolas, 'courier new', monospace; }
@@ -384,3 +391,5 @@ a img { border:none; }
     border:1px solid #A33F3F; background-color:#D28A8A;
     padding:0.5em; margin-top:1em; margin-bottom:1em; margin-right:2em;
 }
+
+#kiwi.theme_cli .messages .msg.global_nick_highlight { background:#111111; }
