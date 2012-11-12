@@ -1,4 +1,4 @@
-var _ = require('underscore');
+var _ = require('lodash');
 
 var irc_numerics = {
     RPL_WELCOME:            '001',
@@ -40,7 +40,13 @@ var irc_numerics = {
     ERR_BANNEDFROMCHAN:     '474',
     ERR_BADCHANNELKEY:      '475',
     ERR_CHANOPRIVSNEEDED:   '482',
-    RPL_STARTTLS:           '670'
+    RPL_STARTTLS:           '670',
+    RPL_SASLAUTHENTICATED:  '900',
+    RPL_SASLLOGGEDIN:       '903',
+    ERR_SASLNOTAUTHORISED:  '904',
+    ERR_SASLABORTED:        '906',
+    ERR_SASLALREADYAUTHED:  '907'
+    
 };
 
 
@@ -97,12 +103,12 @@ var listeners = {
                     this.irc_connection.options.CHANTYPES = this.irc_connection.options.CHANTYPES.split('');
                 } else if (option[0] === 'CHANMODES') {
                     this.irc_connection.options.CHANMODES = option[1].split(',');
-                } else if (option[0] === 'NAMESX') {
+                } else if ((option[0] === 'NAMESX') && (!_.contains(this.irc_connection.cap.enabled, 'multi-prefix'))) {
                     this.irc_connection.write('PROTOCTL NAMESX');
                 }
             }
         }
-        this.client.sendIrcCommand('options', {server: this.con_num, options: this.irc_connection.options});
+        this.client.sendIrcCommand('options', {server: this.con_num, options: this.irc_connection.options, cap: this.irc_connection.cap.enabled});
     },
     'RPL_ENDOFWHOIS': function (command) {
         this.client.sendIrcCommand('whois', {server: this.con_num, nick: command.params[1], msg: command.trailing, end: true});
@@ -273,7 +279,7 @@ var listeners = {
         if (command.nick === this.nick) {
             this.irc_connection.write('NAMES ' + channel);
             this.irc_connection.write('WHO ' + channel);
-        } else {
+        } else if (!_.contains(this.irc_connection.cap.enabled, 'multi-prefix')){
             this.irc_connection.write('WHO ' + command.nick);
         }
     },
@@ -319,7 +325,7 @@ var listeners = {
             prefixes = this.irc_connection.options.PREFIX,
             always_param = chanmodes[0].concat(chanmodes[1]),
             modes = [],
-            has_param, i, j, add, user, chan;
+            has_param, i, j, add, chan;
         
         prefixes = _.reduce(prefixes, function (list, prefix) {
             list.push(prefix.mode);
@@ -365,7 +371,7 @@ var listeners = {
         
         chan = this.irc_connection.state.getChannel(command.params[0]);
         if (chan) {
-            chan.mode(modes, this.irc_connection.state.getUser(command.nick));
+            chan.mode(modes, this.irc_connection.state.getUser(command.nick || command.prefix));
         } else {                
             this.client.sendIrcCommand('mode', {
                 server: this.con_num,
@@ -398,6 +404,103 @@ var listeners = {
                 this.client.sendIrcCommand('msg', {server: this.con_num, nick: command.nick, ident: command.ident, hostname: command.hostname, channel: command.params[0], msg: command.trailing});
             }
         }
+    },
+    'CAP': function (command) {
+        // TODO: capability modifiers
+        // i.e. - for disable, ~ for requires ACK, = for sticky
+        var capabilities = command.trailing.replace(/[\-~=]/, '').split(' ');
+        var request;
+        var want = ['multi-prefix', 'away-notify'];
+        
+        if (this.irc_connection.password) {
+            want.push('sasl');
+        }
+        
+        switch (command.params[1]) {
+            case 'LS':
+                request = _.intersection(capabilities, want);
+                if (request.length > 0) {
+                    this.irc_connection.cap.requested = request;
+                    this.irc_connection.write('CAP REQ :' + request.join(' '));
+                } else {
+                    this.irc_connection.write('CAP END');
+                    this.irc_connection.cap_negotation = false;
+                    this.irc_connection.register();
+                }
+                break;
+            case 'ACK':
+                if (capabilities.length > 0) {
+                    this.irc_connection.cap.enabled = capabilities;
+                    this.irc_connection.cap.requested = _.difference(this.irc_connection.cap.requested, capabilities);
+                }
+                if (this.irc_connection.cap.requested.length > 0) {
+                    if (_.contains(this.irc_connection.cap.enabled, 'sasl')) {
+                        this.irc_connection.sasl = true;
+                        this.irc_connection.write('AUTHENTICATE PLAIN');
+                    } else {
+                        this.irc_connection.write('CAP END');
+                        this.irc_connection.cap_negotation = false;
+                        this.irc_connection.register();
+                    }
+                }
+                break;
+            case 'NAK':
+                if (capabilities.length > 0) {
+                    this.irc_connection.cap.requested = _.difference(this.irc_connection.cap.requested, capabilities);
+                }
+                if (this.irc_connection.cap.requested.length > 0) {
+                    this.irc_connection.write('CAP END');
+                    this.irc_connection.cap_negotation = false;
+                    this.irc_connection.register();
+                }
+                break;
+            case 'LIST':
+                // should we do anything here?
+                break;
+        }
+    },
+    'AUTHENTICATE': function (command) {
+        var b = new Buffer(this.irc_connection.nick + "\0" + this.irc_connection.nick + "\0" + this.irc_connection.password, 'utf8');
+        var b64 = b.toString('base64');
+        if (command.params[0] === '+') {
+            while (b64.length >= 400) {
+                this.irc_connection.write('AUTHENTICATE ' + b64.slice(0, 399));
+                b64 = b64.slice(399);
+            }
+            if (b64.length > 0) {
+                this.irc_connection.write('AUTHENTICATE ' + b64);
+            } else {
+                this.irc_connection.write('AUTHENTICATE +');
+            }
+        } else {
+            this.irc_connection.write('CAP END');
+            this.irc_connection.cap_negotation = false;
+            this.irc_connection.register();
+        }
+    },
+    'AWAY': function (command) {
+        var user = this.irc_connection.state.getUser(command.nick, command.ident, command.host);
+        user.setAway(command.trailing !== '');
+    },
+    'RPL_SASLAUTHENTICATED': function (command) {
+        this.irc_connection.write('CAP END');
+        this.irc_connection.cap_negotation = false;
+        this.irc_connection.sasl = true;
+        this.irc_connection.register();
+    },
+    'RPL_SASLLOGGEDIN': function (command) {
+        // noop
+    },
+    'ERR_SASLNOTAUTHORISED': function (command) {
+        this.irc_connection.write('CAP END');
+        this.irc_connection.cap_negotation = false;
+        this.irc_connection.register();
+    },
+    'ERR_SASLABORTED': function (command) {
+        // noop
+    },
+    'ERR_SASLALREADYAUTHED': function (command) {
+        // noop
     },
     'ERROR': function (command) {
         this.client.sendIrcCommand('irc_error', {server: this.con_num, error: 'error', reason: command.trailing});

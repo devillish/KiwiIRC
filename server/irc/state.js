@@ -1,4 +1,4 @@
-var _       = require('underscore'),
+var _       = require('lodash'),
     Channel = require('./channel.js'),
     User    = require('./user.js');
 
@@ -96,7 +96,6 @@ var bindChannelListeners = function (chan) {
     });
     
     chan.on('mode', function (mode, param, set_by) {
-        console.log(arguments);
         that.client.sendIrcCommand('mode', {server: that.connection.con_num, target: this.name, nick: set_by.nick, modes: [{mode: mode, param: param}]});
     });
 };

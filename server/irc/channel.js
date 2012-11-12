@@ -1,6 +1,6 @@
 var events  = require('events'),
     util    = require('util'),
-    _       = require('underscore');
+    _       = require('lodash');
 
 var Channel = function (name, connection) {
     events.EventEmitter.call(this);
@@ -103,7 +103,6 @@ Channel.prototype.setTopic = function (new_topic, set_by) {
 };
 
 Channel.prototype.mode = function (modes, set_by) {
-    console.log(arguments);
     modes.forEach(function (mode) {
         var param = mode.param;
         mode = mode.mode;
