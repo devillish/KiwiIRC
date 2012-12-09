@@ -108,29 +108,15 @@ var connect_handler = function () {
 
     this.write('CAP LS');
 
-    this.registration_timeout = setTimeout(function () {
-        that.register();
-    }, 1000);
-    
-    this.connected = true;
-    this.emit('connected');
-};
-
-IrcConnection.prototype.register = function () {
-    if (this.registration_timeout !== null) {
-        clearTimeout(this.registeration_timeout);
-        this.registration_timeout = null;
-    }
-    if ((this.password) && (!this.sasl)) {
+    if (this.password) {
         this.write('PASS ' + this.password);
     }
     this.write('NICK ' + this.nick);
     this.write('USER ' + this.username + ' 0 0 :' + '[www.kiwiirc.com] ' + this.nick);
-    if (this.cap_negotation) {
-        this.write('CAP END');
-    }
+    
+    this.connected = true;
+    this.emit('connected');
 };
-
 
 
 function findWebIrc(connect_data) {
@@ -160,7 +146,7 @@ function findWebIrc(connect_data) {
 
 
 
-parse_regex = /^(?:(?:(?:(@[^ ]+) )?):(?:([a-z0-9\x5B-\x60\x7B-\x7D\.\-]+)|([a-z0-9\x5B-\x60\x7B-\x7D\.\-]+)!([a-z0-9~\.\-_|]+)@?([a-z0-9\.\-:\/]+)?) )?(\S+)(?: (?!:)(.+?))?(?: :(.+))?$/i;
+parse_regex = /^(?:(?:(?:(@[^ ]+) )?):(?:([a-z0-9\x5B-\x60\x7B-\x7D\.\-]+)|([a-z0-9\x5B-\x60\x7B-\x7D\.\-]+)!([a-z0-9~\.\-_|]+)@?([a-z0-9\.\-:\/_]+)?) )?(\S+)(?: (?!:)(.+?))?(?: :(.+))?$/i;
 var parse = function (data) {
     var i,
         msg,

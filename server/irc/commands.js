@@ -81,6 +81,7 @@ var listeners = {
     'RPL_WELCOME': function (command) {
         var nick =  command.params[0];
         this.irc_connection.registered = true;
+        this.cap_negotation = false;
         this.client.sendIrcCommand('connect', {server: this.con_num, nick: nick});
     },
     'RPL_ISUPPORT': function (command) {
@@ -181,6 +182,7 @@ var listeners = {
         
         _.each(members, function (member) {
             var j, k, modes = [], start_of_nick = 0, user;
+
             for (j = 0; j < member.length; j++) {
                 for (k = 0; k < that.irc_connection.options.PREFIX.length; k++) {
                     if (member.charAt(j) === that.irc_connection.options.PREFIX[k].symbol) {
@@ -190,6 +192,7 @@ var listeners = {
                     }
                 }
             }
+
             if (chan) {
                 if (!chan.expecting_names) {
                     chan.expecting_names = true;
@@ -206,6 +209,7 @@ var listeners = {
                     });
                 }
             }
+
             member_list.push({nick: member, modes: modes});
             if (i++ >= 50) {
                 that.client.sendIrcCommand('userlist', {server: that.con_num, users: member_list, channel: command.params[2]});
@@ -393,8 +397,20 @@ var listeners = {
                 this.client.sendIrcCommand('kiwi', {server: this.con_num, namespace: namespace, data: tmp.substr(namespace.length + 1)});
             } else if (command.trailing.substr(1, 7) === 'VERSION') {
                 this.irc_connection.write('NOTICE ' + command.nick + ' :' + String.fromCharCode(1) + 'VERSION KiwiIRC' + String.fromCharCode(1));
+            } else if (command.trailing.substr(1, 6) === 'SOURCE') {
+                this.irc_connection.write('NOTICE ' + command.nick + ' :' + String.fromCharCode(1) + 'SOURCE http://www.kiwiirc.com/' + String.fromCharCode(1));
+            } else if (command.trailing.substr(1, 10) === 'CLIENTINFO') {
+                this.irc_connection.write('NOTICE ' + command.nick + ' :' + String.fromCharCode(1) + 'CLIENTINFO SOURCE VERSION TIME' + String.fromCharCode(1));
             } else {
-                this.client.sendIrcCommand('ctcp_request', {server: this.con_num, nick: command.nick, ident: command.ident, hostname: command.hostname, channel: command.params[0], msg: command.trailing.substr(1, command.trailing.length - 2)});
+                this.client.sendIrcCommand('ctcp_request', {
+                    server: this.con_num,
+                    nick: command.nick,
+                    ident: command.ident,
+                    hostname: command.hostname,
+                    target: command.params[0],
+                    type: (command.trailing.substr(1, command.trailing.length - 2).split(' ') || [null])[0],
+                    msg: command.trailing.substr(1, command.trailing.length - 2)
+                });
             }
         } else {
             var chan = this.irc_connection.state.getChannel(command.params[0]);
@@ -425,7 +441,6 @@ var listeners = {
                 } else {
                     this.irc_connection.write('CAP END');
                     this.irc_connection.cap_negotation = false;
-                    this.irc_connection.register();
                 }
                 break;
             case 'ACK':
@@ -440,7 +455,6 @@ var listeners = {
                     } else {
                         this.irc_connection.write('CAP END');
                         this.irc_connection.cap_negotation = false;
-                        this.irc_connection.register();
                     }
                 }
                 break;
@@ -451,7 +465,6 @@ var listeners = {
                 if (this.irc_connection.cap.requested.length > 0) {
                     this.irc_connection.write('CAP END');
                     this.irc_connection.cap_negotation = false;
-                    this.irc_connection.register();
                 }
                 break;
             case 'LIST':
@@ -475,7 +488,6 @@ var listeners = {
         } else {
             this.irc_connection.write('CAP END');
             this.irc_connection.cap_negotation = false;
-            this.irc_connection.register();
         }
     },
     'AWAY': function (command) {
@@ -486,18 +498,19 @@ var listeners = {
         this.irc_connection.write('CAP END');
         this.irc_connection.cap_negotation = false;
         this.irc_connection.sasl = true;
-        this.irc_connection.register();
     },
     'RPL_SASLLOGGEDIN': function (command) {
-        // noop
+        if (this.irc_connection.cap_negotation === false) {
+            this.irc_connection.write('CAP END');
+        }
     },
     'ERR_SASLNOTAUTHORISED': function (command) {
+            this.irc_connection.write('CAP END');
+            this.irc_connection.cap_negotation = false;
+        },
+    'ERR_SASLABORTED': function (command) {
         this.irc_connection.write('CAP END');
         this.irc_connection.cap_negotation = false;
-        this.irc_connection.register();
-    },
-    'ERR_SASLABORTED': function (command) {
-        // noop
     },
     'ERR_SASLALREADYAUTHED': function (command) {
         // noop
@@ -542,6 +555,6 @@ var listeners = {
         this.client.sendIrcCommand('irc_error', {server: this.con_num, error: 'nickname_in_use', nick: command.params[1], reason: command.trailing});
     },
     ERR_NOTREGISTERED: function (command) {
-        // We should probably log an error here...
+        // TODO: We should probably log an error here...
     }
 };
