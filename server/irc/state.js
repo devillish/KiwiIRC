@@ -87,6 +87,7 @@ module.exports = State;
 
 /*
  * Common user events
+ * Each function called in the scope of the user
  */
 var user_events = {
     nick: function (new_nick) {
@@ -106,7 +107,7 @@ var user_events = {
     away: function (away) {
         that.client.sendIrcCommand('away', {server: that.connection.con_num, nick: this.nick, away: away});
     }
-}
+};
 
 
 // Bind each of the user_events methods to the user object
