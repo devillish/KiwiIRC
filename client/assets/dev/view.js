@@ -101,7 +101,8 @@ _kiwi.view.ServerSelect = function () {
     var model = Backbone.View.extend({
         events: {
             'submit form': 'submitForm',
-            'click .show_more': 'showMore'
+            'click .show_more': 'showMore',
+            'change .have_pass input': 'showPass'
         },
 
         initialize: function () {
@@ -145,26 +146,34 @@ _kiwi.view.ServerSelect = function () {
             if ($('button', this.$el).attr('disabled')) return;
             
             var values = {
-                nick: $('.nick', this.$el).val(),
-                server: $('.server', this.$el).val(),
-                port: $('.port', this.$el).val(),
-                ssl: $('.ssl', this.$el).prop('checked'),
-                password: $('.password', this.$el).val(),
-                channel: $('.channel', this.$el).val(),
-                channel_key: $('.channel_key', this.$el).val()
+                nick: $('input.nick', this.$el).val(),
+                server: $('input.server', this.$el).val(),
+                port: $('input.port', this.$el).val(),
+                ssl: $('input.ssl', this.$el).prop('checked'),
+                password: $('input.password', this.$el).val(),
+                channel: $('input.channel', this.$el).val(),
+                channel_key: $('input.channel_key', this.$el).val()
             };
 
             this.trigger('server_connect', values);
         },
 
         submitNickChange: function (event) {
-            _kiwi.gateway.changeNick($('.nick', this.$el).val());
+            _kiwi.gateway.changeNick($('input.nick', this.$el).val());
             this.networkConnecting();
+        },
+
+        showPass: function (event) {
+            if (this.$el.find('tr.have_pass input').is(':checked')) {
+                this.$el.find('tr.pass').show().find('input').focus();
+            } else {
+                this.$el.find('tr.pass').hide().find('input').val('');
+            }
         },
 
         showMore: function (event) {
             $('.more', this.$el).slideDown('fast');
-            $('.server', this.$el).select();
+            $('input.server', this.$el).select();
         },
 
         populateFields: function (defaults) {
@@ -180,13 +189,13 @@ _kiwi.view.ServerSelect = function () {
             channel = defaults.channel || '';
             channel_key = defaults.channel_key || '';
 
-            $('.nick', this.$el).val(nick);
-            $('.server', this.$el).val(server);
-            $('.port', this.$el).val(port);
-            $('.ssl', this.$el).prop('checked', ssl);
-            $('.password', this.$el).val(password);
-            $('.channel', this.$el).val(channel);
-            $('.channel_key', this.$el).val(channel_key);
+            $('input.nick', this.$el).val(nick);
+            $('input.server', this.$el).val(server);
+            $('input.port', this.$el).val(port);
+            $('input.ssl', this.$el).prop('checked', ssl);
+            $('input.password', this.$el).val(password);
+            $('input.channel', this.$el).val(channel);
+            $('input.channel_key', this.$el).val(channel_key);
         },
 
         hide: function () {
@@ -207,6 +216,7 @@ _kiwi.view.ServerSelect = function () {
             } else if (new_state === 'nick_change') {
                 $('.more', this.$el).hide();
                 $('.show_more', this.$el).hide();
+                $('input.nick', this.$el).select();
             }
 
             state = new_state;
@@ -249,6 +259,7 @@ _kiwi.view.Panel = Backbone.View.extend({
     className: "messages",
     events: {
         "click .chan": "chanClick",
+        'click .media .open': 'mediaClick',
         'mouseenter .msg .nick': 'msgEnter',
         'mouseleave .msg .nick': 'msgLeave'
     },
@@ -297,27 +308,32 @@ _kiwi.view.Panel = Backbone.View.extend({
         msg.msg =  $('<div />').text(msg.msg).html();
 
         // Make the channels clickable
-        re = new RegExp('\\B([' + _kiwi.gateway.get('channel_prefix') + '][^ ,.\\007]+)', 'g');
+        re = new RegExp('(?:^|\\s)([' + _kiwi.gateway.get('channel_prefix') + '][^ ,.\\007]+)', 'g');
         msg.msg = msg.msg.replace(re, function (match) {
-            return '<a class="chan">' + match + '</a>';
+            return '<a class="chan" data-channel="' + match.trim() + '">' + match + '</a>';
         });
 
 
-        // Make links clickable
-        msg.msg = msg.msg.replace(/((https?\:\/\/|ftp\:\/\/)|(www\.))(\S+)(\w{2,4})(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]*))?/gi, function (url) {
-            var nice;
+        // Parse any links found
+        msg.msg = msg.msg.replace(/(([A-Za-z0-9\-]+\:\/\/)|(www\.))([\w.]+)([a-zA-Z]{2,6})(:[0-9]+)?(\/[\w#!:.?$'()[\]*,;~+=&%@!\-\/]*)?/gi, function (url) {
+            var nice, extra_html = '';
 
-            // Add the http is no protoocol was found
+            // Add the http if no protoocol was found
             if (url.match(/^www\./)) {
                 url = 'http://' + url;
             }
 
+            // Shorten the displayed URL if it's going to be too long
             nice = url;
             if (nice.length > 100) {
                 nice = nice.substr(0, 100) + '...';
             }
 
-            return '<a class="link_ext" target="_blank" rel="nofollow" href="' + url + '">' + nice + '</a>';
+            // Get any media HTML if supported
+            extra_html = _kiwi.view.MediaMessage.buildHtml(url);
+
+            // Make the link clickable
+            return '<a class="link_ext" target="_blank" rel="nofollow" href="' + url + '">' + nice + '</a> ' + extra_html;
         });
 
 
@@ -377,11 +393,27 @@ _kiwi.view.Panel = Backbone.View.extend({
     },
     chanClick: function (event) {
         if (event.target) {
-            _kiwi.gateway.join($(event.target).text());
+            _kiwi.gateway.join($(event.target).data('channel'));
         } else {
             // IE...
-            _kiwi.gateway.join($(event.srcElement).text());
+            _kiwi.gateway.join($(event.srcElement).data('channel'));
         }
+    },
+
+    mediaClick: function (event) {
+        var $media = $(event.target).parents('.media');
+        var media_message;
+
+        if ($media.data('media')) {
+            media_message = $media.data('media');
+        } else {
+            media_message = new _kiwi.view.MediaMessage({el: $media[0]});
+            $media.data('media', media_message);
+        }
+
+        $media.data('media', media_message);
+
+        media_message.open();
     },
 
     msgEnter: function (event) {
@@ -426,11 +458,11 @@ _kiwi.view.Panel = Backbone.View.extend({
         // Show this panels memberlist
         var members = this.model.get("members");
         if (members) {
-            $('#memberlists').show();
+            $('#memberlists').removeClass('disabled');
             members.view.show();
         } else {
             // Memberlist not found for this panel, hide any active ones
-            $('#memberlists').hide().children().removeClass('active');
+            $('#memberlists').addClass('disabled').children().removeClass('active');
         }
 
         _kiwi.app.view.doLayout();
@@ -979,7 +1011,7 @@ _kiwi.view.Application = Backbone.View.extend({
 
         // Change the theme when the config is changed
         _kiwi.global.settings.on('change:theme', this.updateTheme, this);
-        this.updateTheme();
+        this.updateTheme(getQueryVariable('theme'));
 
         this.doLayout();
 
@@ -1006,7 +1038,7 @@ _kiwi.view.Application = Backbone.View.extend({
 
         // Clear any current theme
         this.$el.removeClass(function (i, css) {
-            return (css.match (/\btheme_\S+/g) || []).join(' ');
+            return (css.match(/\btheme_\S+/g) || []).join(' ');
         });
 
         // Apply the new theme
@@ -1031,6 +1063,7 @@ _kiwi.view.Application = Backbone.View.extend({
 
 
     doLayout: function () {
+        var el_kiwi = $('#kiwi');
         var el_panels = $('#panels');
         var el_memberlists = $('#memberlists');
         var el_toolbar = $('#toolbar');
@@ -1057,14 +1090,23 @@ _kiwi.view.Application = Backbone.View.extend({
         el_memberlists.css(css_heights);
         el_resize_handle.css(css_heights);
 
+        // Determine if we have a narrow window (mobile/tablet/or even small desktop window)
+        if (el_kiwi.outerWidth() < 400) {
+            el_kiwi.addClass('narrow');
+        } else {
+            el_kiwi.removeClass('narrow');
+        }
+
         // Set the panels width depending on the memberlist visibility
         if (el_memberlists.css('display') != 'none') {
-            // Handle + panels to the side of the memberlist
-            el_panels.css('right', el_memberlists.outerWidth(true) + el_resize_handle.outerWidth(true));
-            el_resize_handle.css('left', el_memberlists.position().left - el_resize_handle.outerWidth(true));
+            // Panels to the side of the memberlist
+            el_panels.css('right', el_memberlists.outerWidth(true));
+            // The resize handle sits overlapping the panels and memberlist
+            el_resize_handle.css('left', el_memberlists.position().left - (el_resize_handle.outerWidth(true) / 2));
         } else {
-            // Memberlist is hidden so handle + panels to the right edge
-            el_panels.css('right', el_resize_handle.outerWidth(true));
+            // Memberlist is hidden so panels to the right edge
+            el_panels.css('right', 0);
+            // And move the handle just out of sight to the right
             el_resize_handle.css('left', el_panels.outerWidth(true));
         }
     },
@@ -1165,5 +1207,134 @@ _kiwi.view.Application = Backbone.View.extend({
             $('#controlbox').slideDown(0);
             this.doLayout();
         }
+    }
+});
+
+
+
+
+
+
+
+
+
+_kiwi.view.MediaMessage = Backbone.View.extend({
+    events: {
+        'click .media_close': 'close'
+    },
+
+    initialize: function () {
+        // Get the URL from the data
+        this.url = this.$el.data('url');
+    },
+
+    // Close the media content and remove it from display
+    close: function () {
+        var that = this;
+        this.$content.slideUp('fast', function () {
+            that.$content.remove();
+        });
+    },
+
+    // Open the media content within its wrapper
+    open: function () {
+        // Create the content div if we haven't already
+        if (!this.$content) {
+            this.$content = $('<div class="media_content"><a class="media_close"><i class="icon-chevron-up"></i> Close media</a><br /><div class="content"></div></div>');
+            this.$content.find('.content').append(this.mediaTypes[this.$el.data('type')].apply(this, []) || 'Not found :(');
+        }
+
+        // Now show the content if not already
+        if (!this.$content.is(':visible')) {
+            // Hide it first so the slideDown always plays
+            this.$content.hide();
+
+            // Add the media content and slide it into view
+            this.$el.append(this.$content);
+            this.$content.slideDown();
+        }
+    },
+
+
+
+    // Generate the media content for each recognised type
+    mediaTypes: {
+        twitter: function () {
+            var tweet_id = this.$el.data('tweetid');
+            var that = this;
+
+            $.getJSON('https://api.twitter.com/1/statuses/oembed.json?id=' + tweet_id + '&callback=?', function (data) {
+                that.$content.find('.content').html(data.html);
+            });
+
+            return $('<div>Loading tweet..</div>');
+        },
+
+
+        image: function () {
+            return $('<a href="' + this.url + '" target="_blank"><img height="100" src="' + this.url + '" /></a>');
+        },
+
+
+        reddit: function () {
+            var that = this;
+            var matches = (/reddit\.com\/r\/([a-zA-Z0-9_\-]+)\/comments\/([a-z0-9]+)\/([^\/]+)?/gi).exec(this.url);
+
+            $.getJSON('http://www.' + matches[0] + '.json?jsonp=?', function (data) {
+                console.log('Loaded reddit data', data);
+                var post = data[0].data.children[0].data;
+                var thumb = '';
+
+                // Show a thumbnail if there is one
+                if (post.thumbnail) {
+                    //post.thumbnail = 'http://www.eurotunnel.com/uploadedImages/commercial/back-steps-icon-arrow.png';
+
+                    // Hide the thumbnail if an over_18 image
+                    if (post.over_18) {
+                        thumb = '<span class="thumbnail_nsfw" onclick="$(this).find(\'p\').remove(); $(this).find(\'img\').css(\'visibility\', \'visible\');">';
+                        thumb += '<p style="font-size:0.9em;line-height:1.2em;cursor:pointer;">Show<br />NSFW</p>';
+                        thumb += '<img src="' + post.thumbnail + '" class="thumbnail" style="visibility:hidden;" />';
+                        thumb += '</span>';
+                    } else {
+                        thumb = '<img src="' + post.thumbnail + '" class="thumbnail" />';
+                    }
+                }
+
+                // Build the template string up
+                var tmpl = '<div>' + thumb + '<b><%- title %></b><br />Posted by <%- author %>. &nbsp;&nbsp; ';
+                tmpl += '<i class="icon-arrow-up"></i> <%- ups %> &nbsp;&nbsp; <i class="icon-arrow-down"></i> <%- downs %><br />';
+                tmpl += '<%- num_comments %> comments made. <a href="http://www.reddit.com<%- permalink %>">View post</a></div>';
+
+                that.$content.find('.content').html(_.template(tmpl, post));
+            });
+
+            return $('<div>Loading Reddit thread..</div>');
+        }
+    }
+
+}, {
+
+    // Build the closed media HTML from a URL
+    buildHtml: function (url) {
+        var html = '', matches;
+
+        // Is it an image?
+        if (url.match(/(\.jpe?g|\.gif|\.bmp|\.png)\??$/i)) {
+            html += '<span class="media image" data-type="image" data-url="' + url + '" title="Open Image"><a class="open"><i class="icon-chevron-right"></i></a></span>';
+        }
+
+        // Is it a tweet?
+        matches = (/https?:\/\/twitter.com\/([a-zA-Z0-9_]+)\/status\/([0-9]+)/ig).exec(url);
+        if (matches) {
+            html += '<span class="media twitter" data-type="twitter" data-url="' + url + '" data-tweetid="' + matches[2] + '" title="Show tweet information"><a class="open"><i class="icon-chevron-right"></i></a></span>';
+        }
+
+        // Is reddit?
+        matches = (/reddit\.com\/r\/([a-zA-Z0-9_\-]+)\/comments\/([a-z0-9]+)\/([^\/]+)?/gi).exec(url);
+        if (matches) {
+            html += '<span class="media reddit" data-type="reddit" data-url="' + url + '" title="Reddit thread"><a class="open"><i class="icon-chevron-right"></i></a></span>';
+        }
+
+        return html;
     }
 });
