@@ -2,17 +2,14 @@ var _       = require('lodash'),
     Channel = require('./channel.js'),
     User    = require('./user.js');
 
-// Used by several events to reference this object
-var that;
-
-
 var State = function (connection, client) {
-    that = this;
-
     this.connection = connection;
     this.client = client;
     this.channels = [];
     this.users = [];
+    
+    // Stores the listeners created by .bind() so that they can be unbound at a later date
+    this.bound_listeners = Object.create(null);
     
     // Create the client user
     this.me = new User(this.connection.nick, this.connection.username, this.client.real_address);
@@ -87,39 +84,42 @@ module.exports = State;
 
 /*
  * Common user events
- * Each function called in the scope of the user
  */
 var user_events = {
-    nick: function (new_nick) {
-        that.client.sendIrcCommand('nick', {server: that.connection.con_num, nick: this.nick, ident: this.ident, hostname: this.host, newnick: new_nick});
+    nick: function (user, new_nick) {
+        this.client.sendIrcCommand('nick', {server: this.connection.con_num, nick: user.nick, ident: user.ident, hostname: user.host, newnick: new_nick});
     },
 
 
-    quit: function (message) {
+    quit: function (user, message) {
        // Remove this user from the user array and dispose of it
-        that.users = _.without(that.users, this);
-        this.dispose();
+        this.users = _.without(this.users, user);
+        user.dispose();
 
-        that.client.sendIrcCommand('quit', {server: that.connection.con_num, nick: this.nick, ident: this.ident, hostname: this.host, message: message});
+        this.client.sendIrcCommand('quit', {server: this.connection.con_num, nick: user.nick, ident: user.ident, hostname: user.host, message: message});
     },
 
 
-    away: function (away) {
-        that.client.sendIrcCommand('away', {server: that.connection.con_num, nick: this.nick, away: away});
+    away: function (user, away) {
+        this.client.sendIrcCommand('away', {server: this.connection.con_num, nick: user.nick, away: away});
     }
 };
 
 
 // Bind each of the user_events methods to the user object
 function bindUserListeners(user) {
+    var that = this;
     _.each(user_events, function (event_fn, event_name) {
-        user.on(event_name, event_fn);
+        var bound_listener = event_fn.bind(that, user);
+        that.bound_listeners[event_name] = bound_listener;
+        user.on(event_name, bound_listener);
     });
 }
 
 function unbindUserListeners(user) {
+    var that = this;
     _.each(user_events, function (event_fn, event_name) {
-        user.removeListener(event_name, event_fn);
+        user.removeListener(event_name, that.bound_listeners[event_name]);
     });
 }
 
@@ -132,55 +132,59 @@ function unbindUserListeners(user) {
  * Common channel events
  */
 var channel_events = {   
-    privmsg: function (user, message) {
-        that.client.sendIrcCommand('msg', {server: that.connection.con_num, nick: user.nick, ident: user.ident, hostname: user.host, channel: this.name, msg: message});
+    privmsg: function (channel, user, message) {
+        this.client.sendIrcCommand('msg', {server: this.connection.con_num, nick: user.nick, ident: user.ident, hostname: user.host, channel: channel.name, msg: message});
     },
     
-    notice: function (user, message) {
-        that.client.sendIrcCommand('notice', {server: that.connection.con_num, nick: user.nick, ident: user.ident, hostname: user.host, target: this.name, msg: message});
+    notice: function (channel, user, message) {
+        this.client.sendIrcCommand('notice', {server: this.connection.con_num, nick: user.nick, ident: user.ident, hostname: user.host, target: channel.name, msg: message});
     },
     
-    join: function (user) {
-        that.client.sendIrcCommand('join', {server: that.connection.con_num, nick: user.nick, ident: user.ident, hostname: user.host, channel: this.name});
+    join: function (channel, user) {
+        this.client.sendIrcCommand('join', {server: this.connection.con_num, nick: user.nick, ident: user.ident, hostname: user.host, channel: channel.name});
     },
     
-    part: function (user, message) {
-        if (user === that.me) {
-            that.channels = _.without(that.channels, this);
-            this.dispose();
+    part: function (channel, user, message) {
+        if (user === this.me) {
+            this.channels = _.without(this.channels, channel);
+            channel.dispose();
         }
-        that.client.sendIrcCommand('part', {server: that.connection.con_num, nick: user.nick, ident: user.ident, hostname: user.host, channel: this.name, message: message});
-        cleanUserList.call(that);
+        this.client.sendIrcCommand('part', {server: this.connection.con_num, nick: user.nick, ident: user.ident, hostname: user.host, channel: channel.name, message: message});
+        cleanUserList.call(this);
     },
     
-    kick: function (kickee, kicker, message) {
-        if (kickee === that.me) {
-            that.channels = _.without(that.channels, this);
-            this.dispose();
+    kick: function (channel, kickee, kicker, message) {
+        if (kickee === this.me) {
+            this.channels = _.without(this.channels, channel);
+            channel.dispose();
         }
-        that.client.sendIrcCommand('kick', {server: that.connection.con_num, kicked: kickee.nick, nick: kicker.nick, ident: kicker.ident, hostname: kicker.host, channel: this.name, message: message});
-        cleanUserList.call(that);
+        this.client.sendIrcCommand('kick', {server: this.connection.con_num, kicked: kickee.nick, nick: kicker.nick, ident: kicker.ident, hostname: kicker.host, channel: channel.name, message: message});
+        cleanUserList.call(this);
     },
     
-    topic: function (new_topic, set_by, set_at) {
-        that.client.sendIrcCommand('topic', {server: that.connection.con_num, nick: set_by.nick, channel: this.name, topic: new_topic});
+    topic: function (channel, new_topic, set_by, set_at) {
+        this.client.sendIrcCommand('topic', {server: this.connection.con_num, nick: set_by.nick, channel: channel.name, topic: new_topic});
     },
     
-    mode: function (mode, param, set_by) {
-        that.client.sendIrcCommand('mode', {server: that.connection.con_num, target: this.name, nick: set_by.nick, modes: [{mode: mode, param: param}]});
+    mode: function (channel, mode, param, set_by) {
+        this.client.sendIrcCommand('mode', {server: this.connection.con_num, target: channel.name, nick: set_by.nick, modes: [{mode: mode, param: param}]});
     }
 };
 
 
 // Bind each of the channel_events methods to the channel object
 function bindChannelListeners(channel) {
+    var that = this;
     _.each(channel_events, function (event_fn, event_name) {
-        channel.on(event_name, event_fn);
+        var bound_listener = event_fn.bind(that, channel);
+        that.bound_listeners[event_name] = bound_listener;
+        channel.on(event_name, bound_listener);
     });
 }
 
 function unbindChannelListeners(channel) {
+    var that = this;
     _.each(channel_events, function (event_fn, event_name) {
-        channel.removeListener(event_name, event_fn);
+        channel.removeListener(event_name, that.bound_listeners[event_name]);
     });
 }

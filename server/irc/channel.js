@@ -2,14 +2,8 @@ var events  = require('events'),
     util    = require('util'),
     _       = require('lodash');
 
-// Used by several events to reference this object
-var that;
-
-
 var Channel = function (name, connection) {
     events.EventEmitter.call(this);
-
-    that = this;
     
     this.name = name;
     this.members = [];
@@ -63,13 +57,15 @@ Channel.prototype.removeMember = function (user) {
 Channel.prototype.addMember = function (user) {
     if (!this.hasMember(user)) {
         this.members.push(user);
-        user.once('quit', removeOnQuit);
+        user.once('quit', function () {
+            removeOnQuit.call(this, user);
+        }.bind(this));
     }
 };
 
-// Event for a user quit. Context of user
-var removeOnQuit = function () {
-    that.removeMember(this);
+// Event for a user quit. Context of Channel
+var removeOnQuit = function (user) {
+    this.removeMember(user);
 };
 
 Channel.prototype.privmsg = function (user, message) {
