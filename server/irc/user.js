@@ -18,6 +18,7 @@ User.prototype.setNick = function (new_nick) {
         this.emit('nick', new_nick);
         this.nick = new_nick;
     }
+    return this;
 };
 
 User.prototype.setIdent = function (new_ident) {
@@ -25,6 +26,7 @@ User.prototype.setIdent = function (new_ident) {
         this.ident = new_ident;
         this.emit('ident', new_ident);
     }
+    return this;
 };
 
 User.prototype.setHost = function (new_host) {
@@ -32,6 +34,7 @@ User.prototype.setHost = function (new_host) {
         this.host = new_host;
         this.emit('host', new_host);
     }
+    return this;
 };
 
 User.prototype.setRealName = function (new_real_name) {
@@ -39,6 +42,7 @@ User.prototype.setRealName = function (new_real_name) {
         this.real_name = new_real_name;
         this.emit('real_name', new_real_name);
     }
+    return this;
 };
 
 User.prototype.setAway = function (away) {
@@ -46,10 +50,12 @@ User.prototype.setAway = function (away) {
         this.emit('away', away);
         this.away = away;
     }
+    return this;
 };
 
 User.prototype.quit = function (message) {
     this.emit('quit', message);
+    return this;
 };
 
 User.prototype.dispose = function () {
