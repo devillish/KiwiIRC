@@ -6,6 +6,7 @@ var irc_numerics = {
     RPL_ISUPPORT:           '005',
     RPL_MAPMORE:            '006',
     RPL_MAPEND:             '007',
+    RPL_USERHOST:           '302',
     RPL_WHOISREGNICK:       '307',
     RPL_WHOISUSER:          '311',
     RPL_WHOISSERVER:        '312',
@@ -90,6 +91,7 @@ var listeners = {
         this.irc_connection.registered = true;
         this.cap_negotation = false;
         this.client.sendIrcCommand('connect', {server: this.con_num, nick: nick});
+        this.irc_connection.write('USERHOST ' + this.irc_connection.nick);
     },
     'RPL_ISUPPORT': function (command) {
         var options, i, option, matches, j;
@@ -585,6 +587,19 @@ var listeners = {
         var params = _.clone(command.params);
         params.shift();
         genericNotice.call(this, command, params.join(', ') + ' ' + command.trailing);
+    },
+    
+    RPL_USERHOST: function (command) {
+        var that = this,
+            trailing = _.clone(command.trailing).split(' '),
+            userhost_regex = /^([^=\*]+)\*?=([\-\+])(?:([^@]+)@)?(.*)$/;
+        trailing.forEach(function (user) {
+            var u = userhost_regex.exec(user);
+            if (u) {
+                user = that.irc_connection.state.getUser(u[1], u[3], u[4]);
+                user.setIdent(u[3]).setHost(u[4]).setAway((u[2] === '-'));
+            }
+        });
     },
 
     ERR_UNKNOWNCOMMAND: function (command) {
