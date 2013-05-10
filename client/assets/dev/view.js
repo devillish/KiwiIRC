@@ -1297,7 +1297,8 @@ _kiwi.view.AppToolbar = Backbone.View.extend({
 
 _kiwi.view.Application = Backbone.View.extend({
     initialize: function () {
-        var that = this;
+        var that = this,
+            theme;
 
         $(window).resize(function() { that.doLayout.apply(that); });
         $('#toolbar').resize(function() { that.doLayout.apply(that); });
@@ -1305,7 +1306,10 @@ _kiwi.view.Application = Backbone.View.extend({
 
         // Change the theme when the config is changed
         _kiwi.global.settings.on('change:theme', this.updateTheme, this);
-        this.updateTheme(getQueryVariable('theme'));
+        theme = getQueryVariable('theme');
+        if (theme) {
+            this.updateTheme(theme);
+        }
 
         _kiwi.global.settings.on('change:channel_list_style', this.setTabLayout, this);
         this.setTabLayout(_kiwi.global.settings.get('channel_list_style'));
