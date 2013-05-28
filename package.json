@@ -22,5 +22,9 @@
     "eventemitter2": "0.4.11",
     "ipaddr.js": "0.1.1",
     "socksjs": "0.3.3"
+  },
+  "devDependencies": {
+    "buster": "0.6.12",
+    "sinon": "1.7.2"
   }
 }
