@@ -1,4 +1,5 @@
-_kiwi.model.DataStore = Backbone.Model.extend({
+
+var DataStore = module.exports = Backbone.Model.extend({
 	initialize: function () {
 		this._namespace = '';
 		this.new_data = {};
@@ -33,7 +34,7 @@ _kiwi.model.DataStore = Backbone.Model.extend({
 {
 	// Generates a new instance of DataStore with a set namespace
 	instance: function (namespace, attributes) {
-		var datastore = new _kiwi.model.DataStore(attributes);
+		var datastore = new DataStore(attributes);
 		datastore.namespace(namespace);
 		return datastore;
 	}

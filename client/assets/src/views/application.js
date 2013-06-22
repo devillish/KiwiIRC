@@ -1,4 +1,7 @@
-_kiwi.view.Application = Backbone.View.extend({
+var Favicon = require('./favicon.js'),
+    utils   = require('../helpers/utils.js');
+
+module.exports = Backbone.View.extend({
     initialize: function () {
         var that = this;
 
@@ -8,7 +11,7 @@ _kiwi.view.Application = Backbone.View.extend({
 
         // Change the theme when the config is changed
         _kiwi.global.settings.on('change:theme', this.updateTheme, this);
-        this.updateTheme(getQueryVariable('theme'));
+        this.updateTheme(utils.getQueryVariable('theme'));
 
         _kiwi.global.settings.on('change:channel_list_style', this.setTabLayout, this);
         this.setTabLayout(_kiwi.global.settings.get('channel_list_style'));
@@ -27,7 +30,7 @@ _kiwi.view.Application = Backbone.View.extend({
             }
         };
 
-        this.favicon = new _kiwi.view.Favicon();
+        this.favicon = new Favicon();
         this.initSound();
     },
 

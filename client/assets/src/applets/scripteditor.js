@@ -1,4 +1,6 @@
     (function () {
+        var Applet = require('../models/applet.js');
+
         var view = Backbone.View.extend({
             events: {
                 'click .btn_save': 'onSave'
@@ -92,6 +94,6 @@
         });
 
 
-        _kiwi.model.Applet.register('kiwi_script_editor', applet);
+        Applet.register('kiwi_script_editor', applet);
         //_kiwi.model.Applet.loadOnce('kiwi_script_editor');
     })();

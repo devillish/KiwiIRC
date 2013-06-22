@@ -1,4 +1,6 @@
-_kiwi.view.ControlBox = Backbone.View.extend({
+var NickChangeBox = require('./nickchangebox.js');
+
+module.exports = Backbone.View.extend({
     events: {
         'keydown .inp': 'process',
         'click .nick': 'showNickChange'
@@ -10,7 +12,8 @@ _kiwi.view.ControlBox = Backbone.View.extend({
         this.buffer = [];  // Stores previously run commands
         this.buffer_pos = 0;  // The current position in the buffer
 
-        this.preprocessor = new InputPreProcessor();
+        //this.preprocessor = new InputPreProcessor();
+        this.preprocessor = new (require('../helpers/utils.js').InputPreProcessor)();
         this.preprocessor.recursive_depth = 5;
 
         // Hold tab autocomplete data
@@ -32,7 +35,7 @@ _kiwi.view.ControlBox = Backbone.View.extend({
     },
 
     showNickChange: function (ev) {
-        (new _kiwi.view.NickChangeBox()).render();
+        (new NickChangeBox()).render();
     },
 
     process: function (ev) {

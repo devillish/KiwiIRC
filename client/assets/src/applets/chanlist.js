@@ -1,5 +1,7 @@
 (function () {
 
+    var Applet   = require('../models/applet.js');
+
     var View = Backbone.View.extend({
         events: {
         },
@@ -53,7 +55,7 @@
 
 
 
-    var Applet = Backbone.Model.extend({
+    var appl = Backbone.Model.extend({
         initialize: function () {
             this.set('title', _kiwi.global.i18n.translate('client_applets_chanlist_channellist').fetch());
             this.view = new View();
@@ -83,7 +85,8 @@
             _.each(channels, function (chan) {
                 var row;
                 row = document.createElement("tr");
-                row.innerHTML = '<td><a class="chan" data-channel="' + chan.channel + '">' + _.escape(chan.channel) + '</a></td><td class="num_users" style="text-align: center;">' + chan.num_users + '</td><td style="padding-left: 2em;">' + formatIRCMsg(_.escape(chan.topic)) + '</td>';
+                //row.innerHTML = '<td><a class="chan" data-channel="' + chan.channel + '">' + _.escape(chan.channel) + '</a></td><td class="num_users" style="text-align: center;">' + chan.num_users + '</td><td style="padding-left: 2em;">' + formatIRCMsg(_.escape(chan.topic)) + '</td>';
+                row.innerHTML = '<td><a class="chan" data-channel="' + chan.channel + '">' + _.escape(chan.channel) + '</a></td><td class="num_users" style="text-align: center;">' + chan.num_users + '</td><td style="padding-left: 2em;">' + require('../helpers/utils.js').formatIRCMsg(_.escape(chan.topic)) + '</td>';
                 chan.dom = row;
                 that.view.channels.push(chan);
             });
@@ -112,5 +115,5 @@
 
 
 
-    _kiwi.model.Applet.register('kiwi_chanlist', Applet);
+    Applet.register('kiwi_chanlist', appl);
 })();

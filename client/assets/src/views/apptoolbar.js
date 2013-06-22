@@ -1,4 +1,4 @@
-_kiwi.view.AppToolbar = Backbone.View.extend({
+module.exports = Backbone.View.extend({
     events: {
         'click .settings': 'clickSettings'
     },

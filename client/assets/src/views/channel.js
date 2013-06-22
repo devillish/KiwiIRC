@@ -1,7 +1,11 @@
-_kiwi.view.Channel = _kiwi.view.Panel.extend({
+var Panel   = require('./panel.js'),
+    UserBox = require('./userbox.js'),
+    MenuBox = require('./menubox.js');
+
+module.exports = Panel.extend({
     events: function(){
-        var parent_events = _kiwi.view.Panel.prototype.events;
-        
+        var parent_events = Panel.prototype.events;
+
         if(_.isFunction(parent_events)){
             parent_events = parent_events();
         }
@@ -57,7 +61,7 @@ _kiwi.view.Channel = _kiwi.view.Panel.extend({
         if (members) {
             member = members.getByNick(nick);
             if (member) {
-                userbox = new _kiwi.view.UserBox();
+                userbox = new UserBox();
                 userbox.member = member;
                 userbox.channel = this.model;
 
@@ -66,7 +70,7 @@ _kiwi.view.Channel = _kiwi.view.Panel.extend({
                     userbox.$el.children('.if_op').remove();
                 }
 
-                menubox = new _kiwi.view.MenuBox(member.get('nick') || 'User');
+                menubox = new MenuBox(member.get('nick') || 'User');
                 menubox.addItem('userbox', userbox.$el);
                 menubox.show();
 

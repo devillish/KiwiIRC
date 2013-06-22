@@ -1,5 +1,8 @@
-_kiwi.model.MemberList = Backbone.Collection.extend({
-    model: _kiwi.model.Member,
+var Member          = require('./member.js'),
+    MemberListView  = require('../views/memberlist.js');
+
+module.exports = Backbone.Collection.extend({
+    model: Member,
     comparator: function (a, b) {
         var i, a_modes, b_modes, a_idx, b_idx, a_nick, b_nick;
         var user_prefixes = _kiwi.gateway.get('user_prefixes');
@@ -46,7 +49,7 @@ _kiwi.model.MemberList = Backbone.Collection.extend({
         }
     },
     initialize: function (options) {
-        this.view = new _kiwi.view.MemberList({"model": this});
+        this.view = new MemberListView({"model": this});
     },
     getByNick: function (nick) {
         if (typeof nick !== 'string') return;

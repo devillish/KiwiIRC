@@ -1,4 +1,4 @@
-_kiwi.view.StatusMessage = Backbone.View.extend({
+module.exports = Backbone.View.extend({
     initialize: function () {
         this.$el.hide();
 

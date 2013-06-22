@@ -1,4 +1,6 @@
-_kiwi.view.UserBox = Backbone.View.extend({
+var Query = require('../models/query.js');
+
+module.exports = Backbone.View.extend({
     events: {
         'click .query': 'queryClick',
         'click .info': 'infoClick',
@@ -27,7 +29,7 @@ _kiwi.view.UserBox = Backbone.View.extend({
     },
 
     queryClick: function (event) {
-        var panel = new _kiwi.model.Query({name: this.member.get('nick')});
+        var panel = new Query({name: this.member.get('nick')});
         _kiwi.app.connections.active_connection.panels.add(panel);
         panel.view.show();
     },

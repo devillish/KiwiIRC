@@ -1,13 +1,29 @@
-_kiwi.model.Application = function () {
+var Applet              = require('./applet.js'),
+    Panel               = require('./panel.js'),
+    Query               = require('./query.js'),
+    NetworkPanelList    = require('./networkpanellist.js'),
+    PanelList           = require('./panellist.js'),
+    NewConnection       = require('./newconnection.js'),
+    Gateway             = require('./gateway.js'),
+    TopicBar            = require('../views/topicbar.js'),
+    StatusMessage       = require('../views/statusmessage.js'),
+    ResizeHandler       = require('../views/resizehandler.js'),
+    MenuBox             = require('../views/menubox.js'),
+    ControlBox          = require('../views/controlbox.js'),
+    AppToolbar          = require('../views/apptoolbar.js'),
+    ApplicationView     = require('../views/application.js'),
+    utils               = require('../helpers/utils.js');
+
+module.exports = function () {
     // Set to a reference to this object within initialize()
     var that = null;
 
 
     var model = function () {
-        /** _kiwi.view.Application */
+        /** Application View */
         this.view = null;
 
-        /** _kiwi.view.StatusMessage */
+        /** StatusMessage View */
         this.message = null;
 
         /* Address for the kiwi server */
@@ -31,7 +47,7 @@ _kiwi.model.Application = function () {
             this.detectKiwiServer();
 
             // Takes instances of model_network
-            this.connections = new _kiwi.model.NetworkPanelList();
+            this.connections = new NetworkPanelList();
 
             // Set any default settings before anything else is applied
             if (this.server_settings && this.server_settings.client && this.server_settings.client.settings) {
@@ -42,14 +58,14 @@ _kiwi.model.Application = function () {
 
         this.start = function () {
             // Only debug if set in the querystring
-            if (!getQueryVariable('debug')) {
-                manageDebug(false);
+            if (!utils.getQueryVariable('debug')) {
+                utils.manageDebug(false);
             } else {
-                //manageDebug(true);
+                utils.manageDebug(true);
             }
 
             // Set the gateway up
-            _kiwi.gateway = new _kiwi.model.Gateway();
+            _kiwi.gateway = new Gateway();
             this.bindGatewayCommands(_kiwi.gateway);
 
             this.initializeClient();
@@ -73,7 +89,7 @@ _kiwi.model.Application = function () {
 
 
         this.showIntialConenctionDialog = function() {
-            var connection_dialog = new _kiwi.model.NewConnection();
+            var connection_dialog = new NewConnection();
             this.populateDefaultServerSettings(connection_dialog);
 
             connection_dialog.view.$el.addClass('initial');
@@ -107,26 +123,26 @@ _kiwi.model.Application = function () {
 
 
         this.initializeClient = function () {
-            this.view = new _kiwi.view.Application({model: this, el: this.get('container')});
+            this.view = new ApplicationView({model: this, el: this.get('container')});
 
             // Applets panel list
-            this.applet_panels = new _kiwi.model.PanelList();
+            this.applet_panels = new PanelList();
             this.applet_panels.view.$el.addClass('panellist applets');
             this.view.$el.find('.tabs').append(this.applet_panels.view.$el);
 
             /**
              * Set the UI components up
              */
-            this.controlbox = new _kiwi.view.ControlBox({el: $('#kiwi .controlbox')[0]});
+            this.controlbox = new ControlBox({el: $('#kiwi .controlbox')[0]});
             this.bindControllboxCommands(this.controlbox);
 
-            this.topicbar = new _kiwi.view.TopicBar({el: this.view.$el.find('.topic')[0]});
+            this.topicbar = new TopicBar({el: this.view.$el.find('.topic')[0]});
 
-            new _kiwi.view.AppToolbar({el: _kiwi.app.view.$el.find('.toolbar .app_tools')[0]});
+            new AppToolbar({el: _kiwi.app.view.$el.find('.toolbar .app_tools')[0]});
 
-            this.message = new _kiwi.view.StatusMessage({el: this.view.$el.find('.status_message')[0]});
+            this.message = new StatusMessage({el: this.view.$el.find('.status_message')[0]});
 
-            this.resize_handle = new _kiwi.view.ResizeHandler({el: this.view.$el.find('.memberlists_resize_handle')[0]});
+            this.resize_handle = new ResizeHandler({el: this.view.$el.find('.memberlists_resize_handle')[0]});
 
             // Rejigg the UI sizes
             this.view.doLayout();
@@ -139,8 +155,8 @@ _kiwi.model.Application = function () {
             _kiwi.global.panels = this.panels;
             _kiwi.global.panels.applets = this.applet_panels;
 
-            _kiwi.global.components.Applet = _kiwi.model.Applet;
-            _kiwi.global.components.Panel =_kiwi.model.Panel;
+            _kiwi.global.components.Applet = Applet;
+            _kiwi.global.components.Panel = Panel;
         };
 
 
@@ -198,8 +214,8 @@ _kiwi.model.Application = function () {
              */
 
             // Any query parameters first
-            if (getQueryVariable('nick'))
-                defaults.nick = getQueryVariable('nick');
+            if (utils.getQueryVariable('nick'))
+                defaults.nick = utils.getQueryVariable('nick');
 
             if (window.location.hash)
                 defaults.channel = window.location.hash;
@@ -634,7 +650,7 @@ _kiwi.model.Application = function () {
             // Check if we have the panel already. If not, create it
             panel = that.connections.active_connection.panels.getByName(destination);
             if (!panel) {
-                panel = new _kiwi.model.Query({name: destination});
+                panel = new Query({name: destination});
                 that.connections.active_connection.panels.add(panel);
             }
 
@@ -745,19 +761,19 @@ _kiwi.model.Application = function () {
         }
 
         function settingsCommand (ev) {
-            var settings = _kiwi.model.Applet.loadOnce('kiwi_settings');
+            var settings = Applet.loadOnce('kiwi_settings');
             settings.view.show();
         }
 
         function scriptCommand (ev) {
-            var editor = _kiwi.model.Applet.loadOnce('kiwi_script_editor');
+            var editor = Applet.loadOnce('kiwi_script_editor');
             editor.view.show();
         }
 
         function appletCommand (ev) {
             if (!ev.params[0]) return;
 
-            var panel = new _kiwi.model.Applet();
+            var panel = new Applet();
 
             if (ev.params[1]) {
                 // Url and name given
@@ -846,8 +862,8 @@ _kiwi.model.Application = function () {
 
             // If no server address given, show the new connection dialog
             if (!ev.params[0]) {
-                tmp = new _kiwi.view.MenuBox(_kiwi.global.i18n.translate('client_models_application_connection_create').fetch());
-                tmp.addItem('new_connection', new _kiwi.model.NewConnection().view.$el);
+                tmp = new MenuBox(_kiwi.global.i18n.translate('client_models_application_connection_create').fetch());
+                tmp.addItem('new_connection', new NewConnection().view.$el);
                 tmp.show();
 
                 // Center screen the dialog

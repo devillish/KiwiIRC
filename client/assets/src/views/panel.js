@@ -1,4 +1,7 @@
-_kiwi.view.Panel = Backbone.View.extend({
+var MediaMessage    = require('./mediamessage.js'),
+    utils           = require('../helpers/utils.js');
+
+module.exports = Backbone.View.extend({
     tagName: "div",
     className: "panel messages",
 
@@ -51,7 +54,7 @@ _kiwi.view.Panel = Backbone.View.extend({
             prev_msg = sb[sb.length-2];
 
         // Nick highlight detecting
-        if ((new RegExp('(^|\\W)(' + escapeRegex(_kiwi.app.connections.active_connection.get('nick')) + ')(\\W|$)', 'i')).test(msg.msg)) {
+        if ((new RegExp('(^|\\W)(' + require('../helpers/utils.js').escapeRegex(_kiwi.app.connections.active_connection.get('nick')) + ')(\\W|$)', 'i')).test(msg.msg)) {
             is_highlight = true;
             msg_css_classes += ' highlight';
         }
@@ -60,7 +63,7 @@ _kiwi.view.Panel = Backbone.View.extend({
         msg.msg =  $('<div />').text(msg.msg).html();
 
         // Make the channels clickable
-        re = new RegExp('(?:^|\\s)([' + escapeRegex(_kiwi.gateway.get('channel_prefix')) + '][^ ,.\\007]+)', 'g');
+        re = new RegExp('(?:^|\\s)([' + require('../helpers/utils.js').escapeRegex(_kiwi.gateway.get('channel_prefix')) + '][^ ,.\\007]+)', 'g');
         msg.msg = msg.msg.replace(re, function (match) {
             return '<a class="chan" data-channel="' + match.trim() + '">' + match + '</a>';
         });
@@ -82,7 +85,7 @@ _kiwi.view.Panel = Backbone.View.extend({
             }
 
             // Get any media HTML if supported
-            extra_html = _kiwi.view.MediaMessage.buildHtml(url);
+            extra_html = MediaMessage.buildHtml(url);
 
             // Make the link clickable
             return '<a class="link_ext" target="_blank" rel="nofollow" href="' + url + '">' + nice + '</a>' + extra_html;
@@ -90,7 +93,7 @@ _kiwi.view.Panel = Backbone.View.extend({
 
 
         // Convert IRC formatting into HTML formatting
-        msg.msg = formatIRCMsg(msg.msg);
+        msg.msg = utils.formatIRCMsg(msg.msg);
 
 
         // Add some colours to the nick (Method based on IRSSIs nickcolor.pl)
@@ -98,7 +101,7 @@ _kiwi.view.Panel = Backbone.View.extend({
             var nick_int = 0, rgb;
 
             _.map(nick.split(''), function (i) { nick_int += i.charCodeAt(0); });
-            rgb = hsl2rgb(nick_int % 255, 70, 35);
+            rgb = utils.hsl2rgb(nick_int % 255, 70, 35);
             rgb = rgb[2] | (rgb[1] << 8) | (rgb[0] << 16);
 
             return '#' + rgb.toString(16);
@@ -193,7 +196,7 @@ _kiwi.view.Panel = Backbone.View.extend({
         if ($media.data('media')) {
             media_message = $media.data('media');
         } else {
-            media_message = new _kiwi.view.MediaMessage({el: $media[0]});
+            media_message = new MediaMessage({el: $media[0]});
 
             // Cache this MediaMessage instance for when it's opened again
             $media.data('media', media_message);

@@ -1,130 +1,107 @@
 var fs        = require('fs'),
+    path      = require('path'),
+    Stream    = require('stream'),
+    util      = require('util'),
     uglifyJS  = require('uglify-js'),
     _         = require('lodash'),
     po2json   = require('po2json'),
+    browserify= require('browserify'),
+    sourcemap = require('mold-source-map'),
+    through   = require('through'),
     config    = require('./../../../server/configuration.js');
 
 var FILE_ENCODING = 'utf-8',
     EOL = '\n';
 
 
-function concat(file_list, callback) {
-    var num_files = file_list.length,
-        files = [],
-        loaded = 0,
-        error = false;
-
-    file_list.forEach(function (file_path, idx) {
-        if (error) {
-            return;
-        }
-        fs.readFile(file_path, { encoding: FILE_ENCODING }, function (err, data) {
-            if (error) {
-                return;
-            } else if (err) {
-                error = true;
-                return callback(err);
-            }
-            files[idx] = data + '\n\n';
-            if (++loaded === num_files) {
-                callback(null, files.join(EOL));
-            }
-        });
-    });
-}
-
-
-
 config.loadConfig();
 
 
-var source_files = [
-    __dirname + '/app.js',
-    __dirname + '/models/application.js',
-    __dirname + '/models/gateway.js',
-    __dirname + '/models/network.js',
-    __dirname + '/models/member.js',
-    __dirname + '/models/memberlist.js',
-    __dirname + '/models/newconnection.js',
-    __dirname + '/models/panel.js',
-    __dirname + '/models/panellist.js',
-    __dirname + '/models/networkpanellist.js',
-    __dirname + '/models/query.js',
-    __dirname + '/models/channel.js',
-    __dirname + '/models/server.js',
-    __dirname + '/models/applet.js',
-    __dirname + '/models/pluginmanager.js',
-    __dirname + '/models/datastore.js',
-
-    __dirname + '/applets/settings.js',
-    __dirname + '/applets/chanlist.js',
-    __dirname + '/applets/scripteditor.js',
-
-    __dirname + '/helpers/utils.js',
-
-    __dirname + '/views/panel.js',
-    __dirname + '/views/channel.js',
-    __dirname + '/views/applet.js',
-    __dirname + '/views/application.js',
-    __dirname + '/views/apptoolbar.js',
-    __dirname + '/views/controlbox.js',
-    __dirname + '/views/favicon.js',
-    __dirname + '/views/mediamessage.js',
-    __dirname + '/views/member.js',
-    __dirname + '/views/memberlist.js',
-    __dirname + '/views/menubox.js',
-    __dirname + '/views/networktabs.js',
-    __dirname + '/views/nickchangebox.js',
-    __dirname + '/views/resizehandler.js',
-    __dirname + '/views/serverselect.js',
-    __dirname + '/views/statusmessage.js',
-    __dirname + '/views/tabs.js',
-    __dirname + '/views/topicbar.js',
-    __dirname + '/views/userbox.js'
-];
-
-
 /**
- * Build the kiwi.js/kiwi.min.js files
+ * Build the kiwi.js/kiwi.min.js and the sourcemap files
  */
-concat(source_files, function (err, src) {
-    if (!err) {
-        src = '(function (global, undefined) {\n\n' + src + '\n\n})(window);';
-
-        fs.writeFile(__dirname + '/../kiwi.js', src, { encoding: FILE_ENCODING }, function (err) {
-            if (!err) {
-                console.log('Built kiwi.js');
-            } else {
-                console.error('Error building kiwi.js:', err);
+browserify({
+    entries: [
+        __dirname + '/views/userbox.js', // Must come first so dependencies are traversed in the correct order.
+        __dirname + '/app.js',
+        __dirname + '/applets/settings.js',
+        __dirname + '/applets/chanlist.js',
+        __dirname + '/applets/scripteditor.js'
+    ]
+})
+    .require(__dirname + '/app.js', {expose: 'kiwiirc'})
+    .bundle({debug:true})
+    .pipe(sourcemap.transform(function (map, cb) {
+        var out;
+        map.sourceRoot((config.get().http_base_path || '/kiwi') + '/assets/src');
+        map.mapSources(sourcemap.mapPathRelativeTo(path.join(__dirname)));
+        map.file('kiwi.js');
+        out = JSON.parse(map.toJSON());
+        delete out.sourcesContent;
+        fs.writeFile('client/assets/kiwi.js.map', JSON.stringify(out), FILE_ENCODING, function (err) {
+            if (err) {
+                return console.error(err);
             }
+            cb('//@ sourceMappingURL=kiwi.js.map');
         });
+    }))
+    .pipe(new ((function () {
+        var f = function () {
+            Stream.PassThrough.call(this);
+            this.pipe(fs.createWriteStream('client/assets/kiwi.js'));
+        };
+        util.inherits(f, Stream.PassThrough);
+        return f;
+    })())())
+    .pipe((function () {
+        var code = '';
+        return through(function (data) {
+            code += data;
+        }, function () {
+            var ast = uglifyJS.parse(code, {filename: 'kiwi.js'});
+            ast.figure_out_scope();
+            ast = ast.transform(uglifyJS.Compressor({warnings: false}));
+            ast.figure_out_scope();
+            ast.compute_char_frequency();
+            ast.mangle_names();
+            var clean_map = function (map) {
+                map.sources.forEach(function (source, index) {
+                    map.sources[index] = source.slice(1).replace('\\', '/');
+                });
+                return map;
+            };
+            var source_map = uglifyJS.SourceMap({
+                file: 'kiwi.min.js.',
+                orig: clean_map(JSON.parse(fs.readFileSync('client/assets/kiwi.js.map')))
+            });
+            var stream = uglifyJS.OutputStream({
+                source_map: source_map
+            });
+            ast.print(stream);
+            fs.writeFile('client/assets/kiwi.min.js.map', source_map.toString(), FILE_ENCODING, function (err) {
+                if (err) {
+                    return console.error(err);
+                }
+            });
 
-        // Uglify can take take an array of filenames to produce minified code
-        // but it's not wraped in an IIFE and produces a slightly larger file
-        //src = uglifyJS.minify(source_files);
-
-        var ast = uglifyJS.parse(src, {filename: 'kiwi.js'});
-        ast.figure_out_scope();
-        ast = ast.transform(uglifyJS.Compressor({warnings: false}));
-        ast.figure_out_scope();
-        ast.compute_char_frequency();
-        ast.mangle_names();
-        src = ast.print_to_string();
-
-        fs.writeFile(__dirname + '/../kiwi.min.js', src, { encoding: FILE_ENCODING }, function (err) {
-            if (!err) {
-                console.log('Built kiwi.min.js');
-            } else {
-                console.error('Error building kiwi.min.js:', err);
-            }
+            this.queue(stream.toString());
+            this.queue('\n//@ sourceMappingURL=kiwi.min.js.map');
+            this.queue(null);
         });
-    } else {
-        console.error('Error building kiwi.js and kiwi.min.js:', err);
-    }
-});
-
-
-
+    })())
+    .pipe(new ((function () {
+        var f = function () {
+            Stream.PassThrough.call(this);
+            this.pipe(fs.createWriteStream('client/assets/kiwi.min.js'));
+        };
+        util.inherits(f, Stream.PassThrough);
+        return f;
+    })())())
+    .pipe((function () {
+        return through(function (data) {this.queue(data);}, function () {
+            console.log('kiwi.js, kiwi.js.map, kiwi.min.js and kiwi.min.js.map built');
+        });
+    })());
 
 
 

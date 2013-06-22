@@ -1,18 +1,22 @@
+var Panel       = require('./panel.js'),
+    ChannelView = require('../views/channel.js'),
+    MemberList  = require('./memberlist.js');
+
 // TODO: Channel modes
 // TODO: Listen to gateway events for anythign related to this channel
-_kiwi.model.Channel = _kiwi.model.Panel.extend({
+module.exports = Panel.extend({
     initialize: function (attributes) {
         var name = this.get("name") || "",
             members;
 
         this.set({
-            "members": new _kiwi.model.MemberList(),
+            "members": new MemberList(),
             "name": name,
             "scrollback": [],
             "topic": ""
         }, {"silent": true});
 
-        this.view = new _kiwi.view.Channel({"model": this, "name": name});
+        this.view = new ChannelView({"model": this, "name": name});
 
         members = this.get("members");
         members.channel = this;

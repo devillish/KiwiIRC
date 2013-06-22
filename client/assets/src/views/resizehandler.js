@@ -1,4 +1,4 @@
-_kiwi.view.ResizeHandler = Backbone.View.extend({
+module.exports = Backbone.View.extend({
     events: {
         'mousedown': 'startDrag',
         'mouseup': 'stopDrag'

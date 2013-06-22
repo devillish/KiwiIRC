@@ -1,6 +1,8 @@
-_kiwi.model.NewConnection = Backbone.Collection.extend({
+var ServerSelect = require('../views/serverselect.js');
+
+module.exports = Backbone.Collection.extend({
     initialize: function() {
-        this.view = new _kiwi.view.ServerSelect();
+        this.view = new ServerSelect();
 
         this.view.bind('server_connect', this.onMakeConnection, this);
 
@@ -14,12 +16,12 @@ _kiwi.model.NewConnection = Backbone.Collection.extend({
 
         this.view.networkConnecting();
 
-        
+
         // If we don't have socket.io loaded, load it before opening a new connection
         if (!window.io) {
             // Path to get the socket.io transport code
             transport_path = _kiwi.app.kiwi_server + _kiwi.app.get('base_path') + '/transport/socket.io.js?ts='+(new Date().getTime());
-                        
+
             $script(transport_path, function() {
                 if (!window.io) {
                     that.onKiwiServerNotFound();

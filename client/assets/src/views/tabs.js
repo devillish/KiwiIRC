@@ -1,5 +1,5 @@
-// Model for this = _kiwi.model.PanelList
-_kiwi.view.Tabs = Backbone.View.extend({
+// Model for this = PanelList
+module.exports = Backbone.View.extend({
     tagName: 'ul',
     className: 'panellist',
 
@@ -31,7 +31,7 @@ _kiwi.view.Tabs = Backbone.View.extend({
         var that = this;
 
         this.$el.empty();
-        
+
         if (this.is_network) {
             // Add the server tab first
             this.model.server.tab

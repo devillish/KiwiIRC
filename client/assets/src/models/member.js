@@ -1,4 +1,6 @@
-_kiwi.model.Member = Backbone.Model.extend({
+var Member = require('../views/member.js');
+
+module.exports = Backbone.Model.extend({
     sortModes: function (modes) {
         return modes.sort(function (a, b) {
             var a_idx, b_idx, i;
@@ -32,7 +34,7 @@ _kiwi.model.Member = Backbone.Model.extend({
         this.sortModes(modes);
         this.set({"nick": nick, "modes": modes, "prefix": this.getPrefix(modes)}, {silent: true});
         this.isOp();
-        this.view = new _kiwi.view.Member({"model": this});
+        this.view = new Member({"model": this});
     },
     addMode: function (mode) {
         var modes_to_add = mode.split(''),

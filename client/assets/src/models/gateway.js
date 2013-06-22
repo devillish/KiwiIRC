@@ -1,4 +1,6 @@
-_kiwi.model.Gateway = function () {
+var Network = require('./network.js');
+
+module.exports = function () {
 
     // Set to a reference to this object within initialize()
     var that = null;
@@ -233,7 +235,7 @@ _kiwi.model.Gateway = function () {
 
             if (!err) {
                 if (!_kiwi.app.connections.getByConnectionId(server_num)){
-                    connection = new _kiwi.model.Network({connection_id: server_num, nick: h.nick});
+                    connection = new Network({connection_id: server_num, nick: h.nick});
                     _kiwi.app.connections.add(connection);
                 }
 

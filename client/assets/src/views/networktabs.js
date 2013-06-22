@@ -1,5 +1,5 @@
-// Model for this = _kiwi.model.NetworkPanelList
-_kiwi.view.NetworkTabs = Backbone.View.extend({
+// Model for this = NetworkPanelList
+module.exports = Backbone.View.extend({
     tagName: 'ul',
     className: 'connections',
 

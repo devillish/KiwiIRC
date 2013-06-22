@@ -1,8 +1,3 @@
-/*jslint devel: true, browser: true, continue: true, sloppy: true, forin: true, plusplus: true, maxerr: 50, indent: 4, nomen: true, regexp: true*/
-/*globals $, front, gateway, Utilityview */
-
-
-
 /**
 *   Suppresses console.log
 *   @param  {Boolean}   debug   Whether to re-enable console.log or not
@@ -27,6 +22,8 @@ function manageDebug(debug) {
     }
 }
 
+module.exports.manageDebug = manageDebug;
+
 /**
 *   Generate a random string of given length
 *   @param      {Number}    string_length   The length of the random string
@@ -43,6 +40,8 @@ function randomString(string_length) {
     }
     return randomstring;
 }
+
+module.exports.randomString = randomString;
 
 /**
 *   String.trim shim
@@ -93,6 +92,8 @@ function secondsToTime(secs) {
     };
     return obj;
 }
+
+module.exports.secondsToTime = secondsToTime;
 
 
 /* Command input Alias + re-writing */
@@ -194,6 +195,7 @@ function InputPreProcessor () {
     };
 }
 
+module.exports.InputPreProcessor = InputPreProcessor;
 
 /**
  * Convert HSL to RGB formatted colour
@@ -236,6 +238,8 @@ function hsl2rgb(h, s, l) {
     }
     return [r,g,b];
 }
+
+module.exports.hsl2rgb = hsl2rgb;
 
 
 /**
@@ -377,12 +381,30 @@ function formatIRCMsg (msg) {
     return out;
 }
 
+module.exports.formatIRCMsg = formatIRCMsg;
 
 function formatDate (d) {
     d = d || new Date();
     return d.toLocaleDateString() + ', ' + d.getHours().toString() + ':' + d.getMinutes().toString() + ':' + d.getSeconds().toString();
 }
 
+module.exports.formatDate = formatDate;
+
 function escapeRegex (str) {
     return str.replace(/[\[\\\^\$\.\|\?\*\+\(\)]/g, '\\$&');
 }
+
+module.exports.escapeRegex = escapeRegex;
+
+function getQueryVariable(variable) {
+    var query = window.location.search.substring(1);
+    var vars = query.split('&');
+    for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split('=');
+        if (decodeURIComponent(pair[0]) == variable) {
+            return decodeURIComponent(pair[1]);
+        }
+    }
+}
+
+module.exports.getQueryVariable = getQueryVariable;

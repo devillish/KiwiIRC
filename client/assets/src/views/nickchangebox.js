@@ -1,4 +1,4 @@
-_kiwi.view.NickChangeBox = Backbone.View.extend({
+module.exports = Backbone.View.extend({
     events: {
         'submit': 'changeNick',
         'click .cancel': 'close'
@@ -20,7 +20,7 @@ _kiwi.view.NickChangeBox = Backbone.View.extend({
 
         this.$el.css('bottom', _kiwi.app.controlbox.$el.outerHeight(true));
     },
-    
+
     close: function () {
         this.$el.remove();
 

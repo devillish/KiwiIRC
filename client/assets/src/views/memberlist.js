@@ -1,4 +1,7 @@
-_kiwi.view.MemberList = Backbone.View.extend({
+var UserBox = require('./userbox.js'),
+    MenuBox = require('./menubox.js');
+
+module.exports = Backbone.View.extend({
     tagName: "ul",
     events: {
         "click .nick": "nickClick"
@@ -21,7 +24,7 @@ _kiwi.view.MemberList = Backbone.View.extend({
             member = $target.data('member'),
             userbox;
 
-        userbox = new _kiwi.view.UserBox();
+        userbox = new UserBox();
         userbox.member = member;
         userbox.channel = this.model.channel;
 
@@ -29,7 +32,7 @@ _kiwi.view.MemberList = Backbone.View.extend({
             userbox.$el.children('.if_op').remove();
         }
 
-        var menu = new _kiwi.view.MenuBox(member.get('nick') || 'User');
+        var menu = new MenuBox(member.get('nick') || 'User');
         menu.addItem('userbox', userbox.$el);
         menu.show();
 

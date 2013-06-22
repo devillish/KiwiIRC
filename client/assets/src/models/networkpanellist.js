@@ -1,9 +1,12 @@
-_kiwi.model.NetworkPanelList = Backbone.Collection.extend({
-    model: _kiwi.model.Network,
+var NetworkTabs = require('../views/networktabs.js'),
+    Network     = require('./network.js');
+
+module.exports = Backbone.Collection.extend({
+    model: Network,
 
     initialize: function() {
-        this.view = new _kiwi.view.NetworkTabs({model: this});
-        
+        this.view = new NetworkTabs({model: this});
+
         this.on('add', this.onNetworkAdd, this);
         this.on('remove', this.onNetworkRemove, this);
 

@@ -1,5 +1,8 @@
-_kiwi.model.PanelList = Backbone.Collection.extend({
-    model: _kiwi.model.Panel,
+var Panel   = require('./panel.js'),
+    Tabs    = require('../views/tabs.js');
+
+module.exports = Backbone.Collection.extend({
+    model: Panel,
 
     comparator: function (chan) {
         return chan.get('name');
@@ -12,7 +15,7 @@ _kiwi.model.PanelList = Backbone.Collection.extend({
             this.network = network;
         }
 
-        this.view = new _kiwi.view.Tabs({model: this});
+        this.view = new Tabs({model: this});
 
         // Holds the active panel
         this.active = null;

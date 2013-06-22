@@ -1,4 +1,7 @@
-_kiwi.model.Applet = _kiwi.model.Panel.extend({
+var AppletView  = require('../views/applet.js'),
+    Panel       = require('./panel.js');
+
+var Applet = module.exports = Panel.extend({
     // Used to determine if this is an applet panel. Applet panel tabs are treated
     // differently than others
     applet: true,
@@ -7,7 +10,7 @@ _kiwi.model.Applet = _kiwi.model.Panel.extend({
     initialize: function (attributes) {
         // Temporary name
         var name = "applet_"+(new Date().getTime().toString()) + Math.ceil(Math.random()*100).toString();
-        this.view = new _kiwi.view.Applet({model: this, name: name});
+        this.view = new AppletView({model: this, name: name});
 
         this.set({
             "name": name
@@ -73,7 +76,7 @@ _kiwi.model.Applet = _kiwi.model.Panel.extend({
     close: function () {
         this.view.$el.remove();
         this.destroy();
-        
+
         this.view = undefined;
 
         // Call the applets dispose method if it has one
@@ -107,7 +110,7 @@ _kiwi.model.Applet = _kiwi.model.Panel.extend({
 
 
         // If we didn't find an instance, load a new one up
-        return this.load(applet_name);
+        return Applet.load(applet_name);
     },
 
 
@@ -118,7 +121,7 @@ _kiwi.model.Applet = _kiwi.model.Panel.extend({
         if (!_kiwi.applets[applet_name]) return;
 
         // Create the applet and load the content
-        applet = new _kiwi.model.Applet();
+        applet = new Applet();
         applet.load(new _kiwi.applets[applet_name]({_applet_name: applet_name}));
 
         // Add it into the tab list

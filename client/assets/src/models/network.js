@@ -1,6 +1,13 @@
 (function () {
+    var Applet          = require('./applet.js'),
+        Server          = require('./server.js'),
+        Channel         = require('./channel.js'),
+        Query           = require('./query.js'),
+        PanelList       = require('./panellist.js'),
+        Member          = require('./member.js'),
+        NickChangeBox   = require('../views/nickchangebox.js');
 
-    _kiwi.model.Network = Backbone.Model.extend({
+    module.exports = Backbone.Model.extend({
         defaults: {
             connection_id: 0,
             /**
@@ -40,11 +47,11 @@
             this.bindGatewayEvents();
 
             // Create our panel list (tabs)
-            this.panels = new _kiwi.model.PanelList([], this);
+            this.panels = new PanelList([], this);
             //this.panels.network = this;
 
             // Automatically create a server tab
-            var server_panel = new _kiwi.model.Server({name: 'Server'});
+            var server_panel = new Server({name: 'Server'});
             this.panels.add(server_panel);
             this.panels.server = this.panels.active = server_panel;
         },
@@ -120,7 +127,7 @@
                 // Check if we have the panel already. If not, create it
                 channel = that.panels.getByName(channel_name);
                 if (!channel) {
-                    channel = new _kiwi.model.Channel({name: channel_name});
+                    channel = new Channel({name: channel_name});
                     that.panels.add(channel);
                 }
 
@@ -214,14 +221,14 @@
         var c, members, user;
         c = this.panels.getByName(event.channel);
         if (!c) {
-            c = new _kiwi.model.Channel({name: event.channel});
+            c = new Channel({name: event.channel});
             this.panels.add(c);
         }
 
         members = c.get('members');
         if (!members) return;
 
-        user = new _kiwi.model.Member({nick: event.nick, ident: event.ident, hostname: event.hostname});
+        user = new Member({nick: event.nick, ident: event.ident, hostname: event.hostname});
         members.add(user);
     }
 
@@ -296,7 +303,7 @@
         members.remove(user, part_options);
 
         if (part_options.current_user_kicked) {
-            members.reset([]);        
+            members.reset([]);
         }
     }
 
@@ -315,7 +322,7 @@
             // If a panel isn't found for this PM, create one
             panel = this.panels.getByName(event.nick);
             if (!panel) {
-                panel = new _kiwi.model.Query({name: event.nick});
+                panel = new Query({name: event.nick});
                 this.panels.add(panel);
             }
 
@@ -428,7 +435,7 @@
             // If a panel isn't found for this PM, create one
             panel = this.panels.getByName(event.nick);
             if (!panel) {
-                panel = new _kiwi.model.Channel({name: event.nick});
+                panel = new Channel({name: event.nick});
                 this.panels.add(panel);
             }
 
@@ -467,7 +474,7 @@
         c = this.panels.getByName(event.channel);
         if (!c) return;
 
-        when = formatDate(new Date(event.when * 1000));
+        when = require('../helpers/utils.js').formatDate(new Date(event.when * 1000));
         c.addMsg('', _kiwi.global.i18n.translate('client_models_network_topic').fetch(event.nick, when), 'topic');
     }
 
@@ -482,7 +489,7 @@
 
         channel.temp_userlist = channel.temp_userlist || [];
         _.each(event.users, function (item) {
-            var user = new _kiwi.model.Member({nick: item.nick, modes: item.modes});
+            var user = new Member({nick: item.nick, modes: item.modes});
             channel.temp_userlist.push(user);
         });
     }
@@ -595,7 +602,8 @@
             return;
 
         if (typeof event.idle !== 'undefined') {
-            idle_time = secondsToTime(parseInt(event.idle, 10));
+            //idle_time = secondsToTime(parseInt(event.idle, 10));
+            idle_time = require('../helpers/utils.js').secondsToTime(parseInt(event.idle, 10));
             idle_time = idle_time.h.toString().lpad(2, "0") + ':' + idle_time.m.toString().lpad(2, "0") + ':' + idle_time.s.toString().lpad(2, "0");
         }
 
@@ -611,7 +619,7 @@
         } else if (event.logon) {
             logon_date = new Date();
             logon_date.setTime(event.logon * 1000);
-            logon_date = formatDate(logon_date);
+            logon_date = require('../helpers/utils.js').formatDate(logon_date);
 
             panel.addMsg(event.nick, _kiwi.global.i18n.translate('client_models_network_idle_and_signon').fetch(idle_time, logon_date), 'whois');
         } else if (event.away_reason) {
@@ -650,7 +658,7 @@
 
 
     function onListStart(event) {
-        var chanlist = _kiwi.model.Applet.loadOnce('kiwi_chanlist');
+        var chanlist = Applet.loadOnce('kiwi_chanlist');
         chanlist.view.show();
     }
 
@@ -700,7 +708,7 @@
 
             // Only show the nickchange component if the controlbox is open
             if (_kiwi.app.controlbox.$el.css('display') !== 'none') {
-                (new _kiwi.view.NickChangeBox()).render();
+                (new NickChangeBox()).render();
             }
 
             break;

@@ -1,4 +1,6 @@
 (function () {
+    var Applet = require('../models/applet.js');
+
     var View = Backbone.View.extend({
         events: {
             'change [data-setting]': 'saveSettings',
@@ -110,7 +112,7 @@
     });
 
 
-    var Applet = Backbone.Model.extend({
+    var applet = Backbone.Model.extend({
         initialize: function () {
             this.set('title', _kiwi.global.i18n.translate('client_applets_settings_title').fetch());
             this.view = new View();
@@ -118,5 +120,5 @@
     });
 
 
-    _kiwi.model.Applet.register('kiwi_settings', Applet);
+    Applet.register('kiwi_settings', applet);
 })();

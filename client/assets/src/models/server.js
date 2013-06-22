@@ -1,10 +1,13 @@
-_kiwi.model.Server = _kiwi.model.Panel.extend({
+var PanelView = require('../views/panel.js'),
+    PanelModel = require('./panel.js');
+
+module.exports =  PanelModel.extend({
     // Used to determine if this is a server panel
     server: true,
 
     initialize: function (attributes) {
         var name = "Server";
-        this.view = new _kiwi.view.Panel({"model": this, "name": name});
+        this.view = new PanelView({"model": this, "name": name});
         this.set({
             "scrollback": [],
             "name": name

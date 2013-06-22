@@ -1,11 +1,7 @@
-// Holds anything kiwi client specific (ie. front, gateway, _kiwi.plugs..)
-/**
-*   @namespace
-*/
-var _kiwi = {};
+var PluginManager   = require('./models/pluginmanager.js'),
+    Application     = require('./models/application.js'),
+    DataStore       = require('./models/datastore.js');
 
-_kiwi.model = {};
-_kiwi.view = {};
 _kiwi.applets = {};
 
 
@@ -15,22 +11,22 @@ _kiwi.applets = {};
  * and data (think: plugins)
  */
 _kiwi.global = {
-    settings: undefined, // Instance of _kiwi.model.DataStore
-    plugins: undefined,
-    utils: undefined, // TODO: Re-usable methods
-    user: undefined, // TODO: Limited user methods
-    server: undefined, // TODO: Limited server methods
+	settings: undefined, // Instance of DataStore
+	plugins: undefined,
+	utils: undefined, // TODO: Re-usable methods
+	user: undefined, // TODO: Limited user methods
+	server: undefined, // TODO: Limited server methods
 
-    // TODO: think of a better term for this as it will also refer to queries
-    channels: undefined, // TODO: Limited access to panels list
+	// TODO: think of a better term for this as it will also refer to queries
+	channels: undefined, // TODO: Limited access to panels list
 
-    // Event managers for plugins
-    components: {
+	// Event managers for plugins
+	components: {
         EventComponent: function(event_source, proxy_event_name) {
             function proxyEvent(event_name, event_data) {
                 if (proxy_event_name !== 'all') {
                     event_data = event_name.event_data;
-                    event_name = event_name.event_name
+                    event_name = event_name.event_name;
                 }
 //console.log(proxy_event_name, event_name, event_data);
                 this.trigger(event_name, event_data);
@@ -108,10 +104,10 @@ _kiwi.global = {
         opts = opts || {};
 
         // Load the plugin manager
-        _kiwi.global.plugins = new _kiwi.model.PluginManager();
+        _kiwi.global.plugins = new PluginManager();
 
         // Set up the settings datastore
-        _kiwi.global.settings = _kiwi.model.DataStore.instance('kiwi.settings');
+        _kiwi.global.settings = DataStore.instance('kiwi.settings');
         _kiwi.global.settings.load();
 
         continueStart = function (locale, s, xhr) {
@@ -121,7 +117,8 @@ _kiwi.global = {
                 _kiwi.global.i18n = new Jed();
             }
 
-            _kiwi.app = new _kiwi.model.Application(opts);
+            _kiwi.app = new Application(opts);
+
 
             if (opts.kiwi_server) {
                 _kiwi.app.kiwi_server = opts.kiwi_server;

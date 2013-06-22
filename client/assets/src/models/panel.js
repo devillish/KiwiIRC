@@ -1,7 +1,9 @@
-_kiwi.model.Panel = Backbone.Model.extend({
+var PanelView = require('../views/panel.js');
+
+module.exports = Backbone.Model.extend({
     initialize: function (attributes) {
         var name = this.get("name") || "";
-        this.view = new _kiwi.view.Panel({"model": this, "name": name});
+        this.view = new PanelView({"model": this, "name": name});
         this.set({
             "scrollback": [],
             "name": name
