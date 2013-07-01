@@ -1,4 +1,5 @@
 var fs        = require('fs'),
+    zlib      = require('zlib'),
     uglifyJS  = require('uglify-js'),
     _         = require('lodash'),
     config    = require('./../../../server/configuration.js');
@@ -76,6 +77,10 @@ src = '(function (global, undefined) {\n\n' + src + '\n\n})(window);';
 
 fs.writeFileSync(__dirname + '/../kiwi.js', src, FILE_ENCODING);
 
+console.log('kiwi.js built');
+
+var unminified = new Buffer(src);
+
 // Uglify can take take an array of filenames to produce minified code
 // but it's not wraped in an IIFE and produces a slightly larger file
 //src = uglifyJS.minify(source_files);
@@ -90,15 +95,27 @@ src = ast.print_to_string();
 
 fs.writeFileSync(__dirname + '/../kiwi.min.js', src, FILE_ENCODING);
 
+var minified = new Buffer(src);
 
+console.log('kiwi.min.js built');
 
+zlib.gzip(unminified, function (err, data) {
+    if (!err) {
+        fs.writeFileSync(__dirname + '/../kiwi.js.gz', data, {encoding: 'binary'});
+        console.log('Successfully gzipped kiwi.js');
+    } else {
+        console.log('Failed to gzip kiwi.js');
+    }
+});
 
-console.log('kiwi.js and kiwi.min.js built');
-
-
-
-
-
+zlib.gzip(minified, function (err, data) {
+    if (!err) {
+        fs.writeFileSync(__dirname + '/../kiwi.min.js.gz', data, {encoding: 'binary'});
+        console.log('Successfully gzipped kiwi.min.js');
+    } else {
+        console.log('Failed to gzip kiwi.min.js');
+    }
+});
 
 
 
@@ -147,5 +164,25 @@ _.each(vars, function(value, key) {
 
 fs.writeFileSync(__dirname + '/../../index.html', index_src, FILE_ENCODING);
 
-
 console.log('index.html built');
+
+zlib.gzip(new Buffer(index_src), function (err, data) {
+    if (!err) {
+        fs.writeFileSync(__dirname + '/../../index.html.gz', data, {encoding: 'binary'});
+        console.log('Successfully gzipped index.html');
+    } else {
+        console.log('Failed to gzip index.html');
+    }
+});
+
+
+
+
+zlib.gzip(fs.readFileSync(__dirname + '/../css/style.css'), function (err, data) {
+    if (!err) {
+        fs.writeFileSync(__dirname + '/../css/style.css.gz', data, {encoding: 'binary'});
+        console.log('Successfully gzipped style.css');
+    } else {
+        console.log('Failed to gzip style.css');
+    }
+});

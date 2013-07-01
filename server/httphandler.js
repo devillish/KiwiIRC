@@ -5,7 +5,7 @@ var url         = require('url'),
 
 var HttpHandler = function (config) {
     var public_html = config.public_html || 'client/';
-    this.file_server = new node_static.Server(public_html);
+    this.file_server = new node_static.Server(public_html, {gzip: true});
 };
 
 module.exports.HttpHandler = HttpHandler;
