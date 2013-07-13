@@ -26,6 +26,7 @@
     "po2json": "0.0.6",
     "browserify": "~2.25.0",
     "mold-source-map": "~0.2.0",
-    "through": "~2.3.4"
+    "through": "~2.3.4",
+    "source-map": "0.1.25"
   }
 }

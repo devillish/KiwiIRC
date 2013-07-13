@@ -7,6 +7,7 @@ var fs        = require('fs'),
     po2json   = require('po2json'),
     browserify= require('browserify'),
     sourcemap = require('mold-source-map'),
+    source_map= require('source-map'),
     through   = require('through'),
     config    = require('./../../../server/configuration.js');
 
@@ -24,87 +25,119 @@ browserify({
     entries: [
         __dirname + '/views/userbox.js', // Must come first so dependencies are traversed in the correct order.
         __dirname + '/app.js',
-        __dirname + '/applets/settings.js',
-        __dirname + '/applets/chanlist.js',
+        __dirname + '/applets/settings.js',     // Applets aren't require()'d from the main code so they're
+        __dirname + '/applets/chanlist.js',     // included separately.
         __dirname + '/applets/scripteditor.js'
     ]
 })
     .require(__dirname + '/app.js', {expose: 'kiwiirc'})
     .bundle({debug:true})
     .pipe(sourcemap.transform(function (map, cb) {
+        // Extract the inlined, base64-encoded, sourcemap from the generated code and write it to its own file
         var out;
         map.sourceRoot((config.get().http_base_path || '/kiwi') + '/assets/src');
         map.mapSources(sourcemap.mapPathRelativeTo(path.join(__dirname)));
         map.file('kiwi.js');
         out = JSON.parse(map.toJSON());
         delete out.sourcesContent;
+        out.sources.forEach(function (source, index) {
+            out.sources[index] = source.slice(1).replace('\\', '/');
+        });
         fs.writeFile('client/assets/kiwi.js.map', JSON.stringify(out), FILE_ENCODING, function (err) {
             if (err) {
                 return console.error(err);
-            } else {
-                console.log('Built kiwi.js.map');
             }
             cb('//@ sourceMappingURL=kiwi.js.map');
         });
     }))
     .pipe((function () {
+        // Wrap the code in an IIFE so we can include bundle-level "globals", like _kiwi
         var code = '';
         return through(function (data) {
             code += data;
         }, function () {
-            this.queue(code);
-            this.queue(null);
-
+            var that = this;
+            fs.readFile('client/assets/kiwi.js.map', function (err, data) {
+                var node,
+                    map;
+                if (err) {
+                    return console.log('Error reading back kiwi.js.map', err);
+                } else {
+                    node = source_map.SourceNode.fromStringWithSourceMap(
+                        code,
+                        new source_map.SourceMapConsumer(JSON.parse(data))
+                    );
+                    map = node.prepend('(function (window, undefined) {\nvar _kiwi = {};\n')
+                        .add('})(this);\n')
+                        .toStringWithSourceMap({file: 'kiwi.js'}).map.toString();
+                    fs.writeFile('client/assets/kiwi.js.map', map, FILE_ENCODING, function (err) {
+                        if (err) {
+                            return console.error(err);
+                        } else {
+                            console.log('Built kiwi.js.map');
+                            that.queue(node.toString());
+                            that.queue(null);
+                        }
+                    });
+                }
+            });
+        });
+    })())
+    .pipe((function () {
+        // Write out the un-minified code to its own file
+        var code = '';
+        return through(function (data) {
+            code += data;
+        }, function () {
+            var that = this;
             fs.writeFile('client/assets/kiwi.js', code, FILE_ENCODING, function (err) {
                 if (err) {
                     console.log('Error writing to file client/assets/kiwi.js', err);
                 }
                 else {
                     console.log('Built kiwi.js');
+                    that.queue(code);
+                    that.queue(null);
                 }
             });
         });
     })())
     .pipe((function () {
+        // Minify the code, generate a new sourcemap for the minified code and write the sourcemap to a new file
         var code = '';
         return through(function (data) {
             code += data;
         }, function () {
-            var ast = uglifyJS.parse(code, {filename: 'kiwi.js'});
+            var ast = uglifyJS.parse(code, {filename: 'kiwi.js'}),
+                that = this;
             ast.figure_out_scope();
             ast = ast.transform(uglifyJS.Compressor({warnings: false}));
             ast.figure_out_scope();
             ast.compute_char_frequency();
             ast.mangle_names();
-            var clean_map = function (map) {
-                map.sources.forEach(function (source, index) {
-                    map.sources[index] = source.slice(1).replace('\\', '/');
-                });
-                return map;
-            };
             var source_map = uglifyJS.SourceMap({
                 file: 'kiwi.min.js.',
-                orig: clean_map(JSON.parse(fs.readFileSync('client/assets/kiwi.js.map')))
+                orig: JSON.parse(fs.readFileSync('client/assets/kiwi.js.map'))
             });
             var stream = uglifyJS.OutputStream({
                 source_map: source_map
             });
             ast.print(stream);
-            this.queue(stream.toString());
-            this.queue('\n//@ sourceMappingURL=kiwi.min.js.map');
-            this.queue(null);
-
 
             fs.writeFile('client/assets/kiwi.min.js.map', source_map.toString(), FILE_ENCODING, function (err) {
                 if (err) {
                     return console.error(err);
                 } else {
                     console.log('Built kiwi.min.js.map');
+                    that.queue(stream.toString());
+                    that.queue('\n//@ sourceMappingURL=kiwi.min.js.map');
+                    that.queue(null);
                 }
             });
         });
     })())
     .pipe((function () {
+        // Write the minified code out to file
         var code = '';
         return through(function (data) {
             code += data;
