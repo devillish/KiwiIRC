@@ -41,18 +41,30 @@ browserify({
         fs.writeFile('client/assets/kiwi.js.map', JSON.stringify(out), FILE_ENCODING, function (err) {
             if (err) {
                 return console.error(err);
+            } else {
+                console.log('Built kiwi.js.map');
             }
             cb('//@ sourceMappingURL=kiwi.js.map');
         });
     }))
-    .pipe(new ((function () {
-        var f = function () {
-            Stream.PassThrough.call(this);
-            this.pipe(fs.createWriteStream('client/assets/kiwi.js'));
-        };
-        util.inherits(f, Stream.PassThrough);
-        return f;
-    })())())
+    .pipe((function () {
+        var code = '';
+        return through(function (data) {
+            code += data;
+        }, function () {
+            this.queue(code);
+            this.queue(null);
+
+            fs.writeFile('client/assets/kiwi.js', code, FILE_ENCODING, function (err) {
+                if (err) {
+                    console.log('Error writing to file client/assets/kiwi.js', err);
+                }
+                else {
+                    console.log('Built kiwi.js');
+                }
+            });
+        });
+    })())
     .pipe((function () {
         var code = '';
         return through(function (data) {
@@ -78,28 +90,33 @@ browserify({
                 source_map: source_map
             });
             ast.print(stream);
-            fs.writeFile('client/assets/kiwi.min.js.map', source_map.toString(), FILE_ENCODING, function (err) {
-                if (err) {
-                    return console.error(err);
-                }
-            });
-
             this.queue(stream.toString());
             this.queue('\n//@ sourceMappingURL=kiwi.min.js.map');
             this.queue(null);
+
+
+            fs.writeFile('client/assets/kiwi.min.js.map', source_map.toString(), FILE_ENCODING, function (err) {
+                if (err) {
+                    return console.error(err);
+                } else {
+                    console.log('Built kiwi.min.js.map');
+                }
+            });
         });
     })())
-    .pipe(new ((function () {
-        var f = function () {
-            Stream.PassThrough.call(this);
-            this.pipe(fs.createWriteStream('client/assets/kiwi.min.js'));
-        };
-        util.inherits(f, Stream.PassThrough);
-        return f;
-    })())())
     .pipe((function () {
-        return through(function (data) {this.queue(data);}, function () {
-            console.log('kiwi.js, kiwi.js.map, kiwi.min.js and kiwi.min.js.map built');
+        var code = '';
+        return through(function (data) {
+            code += data;
+        }, function () {
+            fs.writeFile('client/assets/kiwi.min.js', code, FILE_ENCODING, function (err) {
+                if (err) {
+                    console.log('Error writing to file client/assets/kiwi.min.js', err);
+                }
+                else {
+                    console.log('Built kiwi.min.js');
+                }
+            });
         });
     })());
 
