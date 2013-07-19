@@ -94,6 +94,18 @@ _kiwi.view.Application = Backbone.View.extend({
             return;
         }
 
+        // If we're navigating around the app with the keyboard, ignore
+        if ((ev.keyCode === 37 /* left  */) ||
+            (ev.keyCode === 38 /* up    */) ||
+            (ev.keyCode === 39 /* right */) ||
+            (ev.keyCode === 40 /* down  */) ||
+            (ev.keyCode === 13 /* enter */) ||
+            (ev.keyCode === 32 /* space */) ||
+            (ev.keyCode === 16 /* shift */) ||
+            (ev.keyCode ===  9 /* tab   */)) {
+            return;
+        }
+
         $('#kiwi .controlbox .inp').focus();
     },
 
@@ -250,6 +262,7 @@ _kiwi.view.Application = Backbone.View.extend({
             this.$el.find('.toolbar').slideDown(0);
             $('#kiwi .controlbox').slideDown(0);
             this.doLayout();
+            $('#kiwi .controlbox .inp').focus();
         }
     },
 
@@ -265,7 +278,7 @@ _kiwi.view.Application = Backbone.View.extend({
             soundManager.setup({
                 url: base_path + '/assets/libs/soundmanager2/',
                 flashVersion: 9, // optional: shiny features (default = 8)// optional: ignore Flash where possible, use 100% HTML5 mode
-                preferFlash: true,
+                preferFlash: false,
 
                 onready: function() {
                     that.sound_object = soundManager.createSound({

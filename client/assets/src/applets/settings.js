@@ -19,6 +19,7 @@
             // Now actually show the current settings
             this.loadSettings();
 
+            this.$el.focus();
         },
 
         loadSettings: function () {
@@ -47,13 +48,17 @@
                         $('[data-setting="' + key + '"][data-value="' + value + '"]', that.$el).addClass('active');
                         break;
                 }
+                if (key === 'theme') {
+                    $('[role=button].active', that.$el).attr('aria-pressed', true);
+                    $('[role=button]:not(.active)', that.$el).attr('aria-pressed', false);
+                }
             });
         },
 
         saveSettings: function (event) {
             var value,
                 settings = _kiwi.global.settings,
-                $setting = $(event.currentTarget, this.$el)
+                $setting = $(event.currentTarget, this.$el);
 
             switch (event.currentTarget.type) {
                 case 'checkbox':
@@ -78,8 +83,8 @@
         },
 
         selectTheme: function(event) {
-            $('[data-setting="theme"].active', this.$el).removeClass('active');
-            $(event.currentTarget).addClass('active').trigger('change');
+            $('[data-setting="theme"].active', this.$el).removeClass('active').attr('aria-pressed', false);
+            $(event.currentTarget).addClass('active').attr('aria-pressed', true).trigger('change');
             event.preventDefault();
         },
 

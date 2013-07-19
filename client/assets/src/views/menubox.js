@@ -1,12 +1,17 @@
 _kiwi.view.MenuBox = Backbone.View.extend({
     events: {
-        'click .ui_menu_foot .close': 'dispose'
+        'click .ui_menu_foot .close': 'dispose',
+        'keydown': 'keyDown'
+    },
+
+    attributes: {
+        tabindex: 0
     },
 
     initialize: function(title) {
         var that = this;
 
-        this.$el = $('<div class="ui_menu"></div>');
+        this.$el = $('<div class="ui_menu" tabindex="-1" role="dialog"></div>');
 
         this._title = title || '';
         this._items = {};
@@ -21,21 +26,21 @@ _kiwi.view.MenuBox = Backbone.View.extend({
         this.$el.find('*').remove();
 
         if (this._title) {
-            $('<div class="ui_menu_title"></div>')
+            $('<div id="ui_menu_title" class="ui_menu_title" tabindex="-1"></div>')
                 .text(this._title)
                 .appendTo(this.$el);
         }
 
 
         _.each(this._items, function(item) {
-            var $item = $('<div class="ui_menu_content hover"></div>')
+            var $item = $('<div class="ui_menu_content hover" tabindex="-1" aria-label="Menu content"></div>')
                 .append(item);
 
             that.$el.append($item);
         });
 
         if (this._display_footer)
-            this.$el.append('<div class="ui_menu_foot"><a class="close" onclick="">Close <i class="icon-remove"></i></a></div>');
+            this.$el.append('<div class="ui_menu_foot" tabindex="-1" aria-label="Menu footer"><a class="close" tabindex="-1" onclick="">Close <i class="icon-remove"></i></a></div>');
     },
 
 
@@ -46,8 +51,13 @@ _kiwi.view.MenuBox = Backbone.View.extend({
             return;
 
         // If this is not itself AND we don't contain this element, dispose $el
-        if ($target[0] != this.$el[0] && this.$el.has($target).length === 0)
-            this.dispose();
+        if ($target[0] != this.$el[0]) {
+            if (this.$el.has($target).length === 0) {
+                this.dispose();
+            }
+        } else {
+            return false;
+        }
     },
 
 
@@ -87,11 +97,15 @@ _kiwi.view.MenuBox = Backbone.View.extend({
     },
 
 
-    show: function() {
+    show: function(container) {
         var that = this;
 
         this.render();
-        this.$el.appendTo(_kiwi.app.view.$el);
+        if (!container) {
+            this.$el.appendTo(_kiwi.app.view.$el);
+        } else {
+            this.$el.appendTo(container);
+        }
 
         // We add this document click listener on the next javascript tick.
         // If the current tick is handling an existing click event (such as the nicklist click handler),
@@ -103,5 +117,40 @@ _kiwi.view.MenuBox = Backbone.View.extend({
             };
             $(document).on('click', that._close_proxy);
         }, 0);
+    },
+
+    keyDown: function (ev) {
+        console.log(ev.target);
+
+        switch (true) {
+            // Escape
+        case (ev.keyCode === 27):
+            this.dispose();
+            return false;
+            // Left
+        case (ev.keyCode === 37):
+            console.log('Down', $(ev.target).find('[tabindex=-1]').first());
+            $(ev.target).find('[tabindex=-1]').first().focus();
+            return false;
+            // Right
+        case (ev.keyCode === 39):
+            console.log('Up', $(ev.target).parents('[tabindex]'));
+            $(ev.target).parents('[tabindex]').first().focus();
+            return false;
+            // Down
+        case (ev.keyCode === 40):
+            console.log('Right', $(ev.target).next('[tabindex=-1]'));
+            $(ev.target).next('[tabindex=-1]').focus();
+            return false;
+            // Up
+        case (ev.keyCode === 38):
+            console.log('Left', $(ev.target).prev('[tabindex=-1]'));
+            $(ev.target).prev('[tabindex=-1]').focus();
+            return false;
+            // Enter or space
+        case ((ev.keyCode === 13) || (ev.keyCode === 32)):
+            $(ev.target).click();
+            return false;
+        }
     }
 });

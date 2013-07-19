@@ -3,6 +3,10 @@ _kiwi.view.Tabs = Backbone.View.extend({
     tagName: 'ul',
     className: 'panellist',
 
+    attributes: {
+        role: "tablist"
+    },
+
     events: {
         'click li': 'tabClick',
         'click li .part': 'partClick'
@@ -31,7 +35,7 @@ _kiwi.view.Tabs = Backbone.View.extend({
         var that = this;
 
         this.$el.empty();
-        
+
         if (this.is_network) {
             // Add the server tab first
             this.model.server.tab
@@ -47,12 +51,19 @@ _kiwi.view.Tabs = Backbone.View.extend({
                 return;
 
             panel.tab.data('panel', panel);
+            panel.tab.attr('aria-controls', 'panel_' + panel.view.panel_id);
 
             if (this.is_network)
                 panel.tab.data('connection_id', this.model.network.get('connection_id'));
 
             panel.tab.appendTo(that.$el);
         });
+
+        if (this.model.length < 1) {
+            this.$el.attr('aria-hidden', true).attr('aria-invalid', true);
+        } else {
+            this.$el.attr('aria-hidden', false).attr('aria-invalid', false);
+        }
 
         _kiwi.app.view.doLayout();
     },
@@ -63,7 +74,7 @@ _kiwi.view.Tabs = Backbone.View.extend({
 
     panelAdded: function (panel) {
         // Add a tab to the panel
-        panel.tab = $('<li><span>' + (panel.get('title') || panel.get('name')) + '</span><div class="activity"></div></li>');
+        panel.tab = $('<li role="tab" aria-relevant="text" aria-atomic="true" aria-live="polite"><span>' + (panel.get('title') || panel.get('name')) + '</span><div class="activity"></div></li>');
 
         if (panel.isServer()) {
             panel.tab.addClass('server');
@@ -71,6 +82,7 @@ _kiwi.view.Tabs = Backbone.View.extend({
         }
 
         panel.tab.data('panel', panel);
+        panel.tab.attr('aria-controls', 'panel_' + panel.view.panel_id);
 
         if (this.is_network)
             panel.tab.data('connection_id', this.model.network.get('connection_id'));
@@ -92,9 +104,9 @@ _kiwi.view.Tabs = Backbone.View.extend({
     panelActive: function (panel, previously_active_panel) {
         // Remove any existing tabs or part images
         _kiwi.app.view.$el.find('.panellist .part').remove();
-        _kiwi.app.view.$el.find('.panellist .active').removeClass('active');
+        _kiwi.app.view.$el.find('.panellist .active').attr('aria-selected', false).removeClass('active');
 
-        panel.tab.addClass('active');
+        panel.tab.addClass('active').attr('aria-selected', true);
 
         // Only show the part image on non-server tabs
         if (!panel.isServer()) {

@@ -2,6 +2,9 @@
 _kiwi.view.NetworkTabs = Backbone.View.extend({
     tagName: 'ul',
     className: 'connections',
+    attributes: {
+        role: "tree"
+    },
 
     initialize: function() {
         this.model.on('add', this.networkAdded, this);
@@ -11,7 +14,7 @@ _kiwi.view.NetworkTabs = Backbone.View.extend({
     },
 
     networkAdded: function(network) {
-        $('<li class="connection"></li>')
+        $('<li class="connection" role="treeitem"></li>')
             .append(network.panels.view.$el)
             .appendTo(this.$el);
     },

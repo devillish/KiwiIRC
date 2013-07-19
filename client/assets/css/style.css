@@ -104,12 +104,12 @@ html, body { height:100%; }
 /* A member/nick list per channel */
 #kiwi .memberlists { border-left: 1px solid #8A8A8A; }
 #kiwi .memberlists.disabled { display:none; }
-#kiwi .memberlists ul { display:none; }
+#kiwi .memberlists ol { display:none; }
 
 /* The active channels nicklist */
-#kiwi .memberlists ul.active { display:block; }
-#kiwi .memberlists ul li { overflow-y:auto; overflow-x:hidden; cursor:pointer; }
-#kiwi .memberlists ul li a.nick { }
+#kiwi .memberlists ol.active { display:block; }
+#kiwi .memberlists ol li { overflow-y:auto; overflow-x:hidden; cursor:pointer; }
+#kiwi .memberlists ol li a.nick { }
 
 /* The userbox shown when clicking a nick */
 #kiwi .userbox { position:relative; }
@@ -624,10 +624,10 @@ html, body { height:100%; }
     border-left: 1px solid #8A8A8A;
 }
 #kiwi.theme_relaxed.narrow .memberlists { display:none; }
-#kiwi.theme_relaxed .memberlists ul { list-style: none; }
-#kiwi.theme_relaxed .memberlists ul.active { }
-#kiwi.theme_relaxed .memberlists ul li { padding: 0.2em 1em; }
-#kiwi.theme_relaxed .memberlists ul li:hover {
+#kiwi.theme_relaxed .memberlists ol { list-style: none; }
+#kiwi.theme_relaxed .memberlists ol.active { display: block; }
+#kiwi.theme_relaxed .memberlists ol li { padding: 0.2em 1em; }
+#kiwi.theme_relaxed .memberlists ol li:hover {
     border-left: 5px solid #88C56A;
     -webkit-transition: 0.2s ease;
     -moz-transition: 0.2s ease;
@@ -635,14 +635,14 @@ html, body { height:100%; }
     -o-transition: 0.2s ease;
     transition: 0.2s ease; 
 }
-#kiwi.theme_relaxed .memberlists ul li a.nick { display:block; color:black; }
+#kiwi.theme_relaxed .memberlists ol li a.nick { display:block; color:black; }
 
 #kiwi.theme_relaxed .userbox { margin:4px 1em 5px 1em; padding-bottom:0.7em; font-size:.9em; }
 #kiwi.theme_relaxed .userbox a { display:block; text-decoration:none; margin-bottom:2px; }
 #kiwi.theme_relaxed .userbox a i { font-size:1.1em; margin-right:5px; }
 
 /* User mode styles */
-#kiwi.theme_relaxed .memberlists ul li .prefix {
+#kiwi.theme_relaxed .memberlists ol li .prefix {
     display:none;
     width:20px; height:20px;
     border-radius: 5px;
@@ -652,11 +652,11 @@ html, body { height:100%; }
     /* text-indent: -1000px; */
 }
 /* Most important modes towards the bottom - they override the top ones! */
-#kiwi.theme_relaxed .memberlists ul li.mode.v .prefix { display:inline-block; background:#b3b3b3; }
-#kiwi.theme_relaxed .memberlists ul li.mode.h .prefix { display:inline-block; background:#b5b447; }
-#kiwi.theme_relaxed .memberlists ul li.mode.o .prefix { display:inline-block; background:#47b547; }
-#kiwi.theme_relaxed .memberlists ul li.mode.a .prefix { display:inline-block; background:#b54747; }
-#kiwi.theme_relaxed .memberlists ul li.mode.q .prefix { display:inline-block; background:#8547b5; }
+#kiwi.theme_relaxed .memberlists ol li.mode.v .prefix { display:inline-block; background:#b3b3b3; }
+#kiwi.theme_relaxed .memberlists ol li.mode.h .prefix { display:inline-block; background:#b5b447; }
+#kiwi.theme_relaxed .memberlists ol li.mode.o .prefix { display:inline-block; background:#47b547; }
+#kiwi.theme_relaxed .memberlists ol li.mode.a .prefix { display:inline-block; background:#b54747; }
+#kiwi.theme_relaxed .memberlists ol li.mode.q .prefix { display:inline-block; background:#8547b5; }
 
 #kiwi.theme_relaxed .controlbox .input {
     background:#fff; margin:3px;
@@ -953,10 +953,10 @@ html, body { height:100%; }
     display:none;
     width:0px;
 }
-#kiwi.theme_mini .memberlists ul { list-style: none; }
-#kiwi.theme_mini .memberlists ul.active { }
-#kiwi.theme_mini .memberlists ul li { padding: 0.2em 1em; }
-#kiwi.theme_mini .memberlists ul li:hover {
+#kiwi.theme_mini .memberlists ol { list-style: none; }
+#kiwi.theme_mini .memberlists ol.active { display: block; }
+#kiwi.theme_mini .memberlists ol li { padding: 0.2em 1em; }
+#kiwi.theme_mini .memberlists ol li:hover {
     border-left: 5px solid #88C56A;
     -webkit-transition: 0.2s ease;
     -moz-transition: 0.2s ease;
@@ -964,7 +964,7 @@ html, body { height:100%; }
     -o-transition: 0.2s ease;
     transition: 0.2s ease; 
 }
-#kiwi.theme_mini .memberlists ul li a.nick { display:block; color:black; }
+#kiwi.theme_mini .memberlists ol li a.nick { display:block; color:black; }
 
 #kiwi.theme_mini .userbox { margin:0 1em 5px 1em; padding-bottom:0.7em; font-size:.9em; }
 #kiwi.theme_mini .userbox a { display:block; text-decoration:none; margin-bottom:2px; }
@@ -1178,9 +1178,9 @@ html, body { height:100%; }
 
 
 #kiwi.theme_cli .memberlists { background:#222222; }
-#kiwi.theme_cli .memberlists ul li { padding: 0.2em 1em; }
-#kiwi.theme_cli .memberlists ul li a.nick { color:#6d6d6d; }
-#kiwi.theme_cli .memberlists ul li:hover {
+#kiwi.theme_cli .memberlists ol li { padding: 0.2em 1em; }
+#kiwi.theme_cli .memberlists ol li a.nick { color:#6d6d6d; }
+#kiwi.theme_cli .memberlists ol li:hover {
     border-left: 5px solid #88C56A;
     -webkit-transition: 0.2s ease;
     -moz-transition: 0.2s ease;
@@ -1489,11 +1489,11 @@ html, body { height:100%; }
     background-color: #DADADA;
     border-left: 1px dashed #8A8A8A;
 }
-#kiwi.theme_basic .memberlists ul { list-style: none; margin-left:2px; }
-#kiwi.theme_basic .memberlists ul.active { }
-#kiwi.theme_basic .memberlists ul li { padding:0 2px; }
-#kiwi.theme_basic .memberlists ul li:hover {}
-#kiwi.theme_basic .memberlists ul li a.nick { display:block; color:black; }
+#kiwi.theme_basic .memberlists ol { list-style: none; margin-left:2px; }
+#kiwi.theme_basic .memberlists ol.active { display: block; }
+#kiwi.theme_basic .memberlists ol li { padding:0 2px; }
+#kiwi.theme_basic .memberlists ol li:hover {}
+#kiwi.theme_basic .memberlists ol li a.nick { display:block; color:black; }
 
 #kiwi.theme_basic .userbox { margin:0 1em 5px 1em; padding-bottom:0.7em; font-size:.9em; }
 #kiwi.theme_basic .userbox a { display:block; text-decoration:none; margin-bottom:2px; }

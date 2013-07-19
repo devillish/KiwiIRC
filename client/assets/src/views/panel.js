@@ -1,12 +1,20 @@
+var panel_counter = 0;
+
 _kiwi.view.Panel = Backbone.View.extend({
     tagName: "div",
     className: "panel messages",
+    id: 'panel_' + panel_counter,
 
     events: {
         "click .chan": "chanClick",
         'click .media .open': 'mediaClick',
         'mouseenter .msg .nick': 'msgEnter',
         'mouseleave .msg .nick': 'msgLeave'
+    },
+
+    attributes: {
+        "role": "log tabpanel",
+        "aria-relevant": "additions"
     },
 
     initialize: function (options) {
@@ -16,6 +24,8 @@ _kiwi.view.Panel = Backbone.View.extend({
     initializePanel: function (options) {
         this.$el.css('display', 'none');
         options = options || {};
+
+        this.panel_id = panel_counter++;
 
         // Containing element for this panel
         if (options.container) {
@@ -37,10 +47,10 @@ _kiwi.view.Panel = Backbone.View.extend({
     render: function () {
         var that = this;
 
-        this.$el.empty();
+        /*this.$el.empty();
         _.each(this.model.get('scrollback'), function (msg) {
             that.newMsg(msg);
-        });
+        });*/
     },
 
     newMsg: function (msg) {
@@ -62,7 +72,7 @@ _kiwi.view.Panel = Backbone.View.extend({
         // Make the channels clickable
         re = new RegExp('(?:^|\\s)([' + escapeRegex(_kiwi.gateway.get('channel_prefix')) + '][^ ,.\\007]+)', 'g');
         msg.msg = msg.msg.replace(re, function (match) {
-            return '<a class="chan" data-channel="' + match.trim() + '">' + match + '</a>';
+            return '<a class="chan" data-channel="' + match.trim() + '" role="link">' + match + '</a>';
         });
 
 
@@ -240,17 +250,17 @@ _kiwi.view.Panel = Backbone.View.extend({
         var $this = this.$el;
 
         // Hide all other panels and show this one
-        this.$container.children('.panel').css('display', 'none');
-        $this.css('display', 'block');
+        this.$container.children('.panel').css('display', 'none').attr('aria-hidden', true);
+        $this.css('display', 'block').attr('aria-hidden', false);
 
         // Show this panels memberlist
         var members = this.model.get("members");
         if (members) {
-            $('#kiwi .memberlists').removeClass('disabled');
+            $('#kiwi .memberlists').removeClass('disabled').attr('aria-hidden', false);
             members.view.show();
         } else {
             // Memberlist not found for this panel, hide any active ones
-            $('#kiwi .memberlists').addClass('disabled').children().removeClass('active');
+            $('#kiwi .memberlists').addClass('disabled').attr('aria-hidden', true).children().removeClass('active');
         }
 
         // Remove any alerts and activity counters for this panel

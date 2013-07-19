@@ -32,7 +32,7 @@ _kiwi.global = {
 	        		event_data = event_name.event_data;
 	        		event_name = event_name.event_name
 	        	}
-//console.log(proxy_event_name, event_name, event_data);
+
 	            this.trigger(event_name, event_data);
 	        }
 

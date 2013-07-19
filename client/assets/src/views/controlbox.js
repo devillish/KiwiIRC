@@ -39,7 +39,9 @@ _kiwi.view.ControlBox = Backbone.View.extend({
         var that = this,
             inp = $(ev.currentTarget),
             inp_val = inp.val(),
-            meta;
+            meta,
+            $tabs,
+            cur_tab_ind;
 
         if (navigator.appVersion.indexOf("Mac") !== -1) {
             meta = ev.metaKey;
@@ -53,7 +55,7 @@ _kiwi.view.ControlBox = Backbone.View.extend({
             this.tabcomplete.data = [];
             this.tabcomplete.prefix = '';
         }
-        
+
         switch (true) {
         case (ev.keyCode === 13):              // return
             inp_val = inp_val.trim();
@@ -69,8 +71,6 @@ _kiwi.view.ControlBox = Backbone.View.extend({
 
             inp.val('');
             return false;
-
-            break;
 
         case (ev.keyCode === 38):              // up
             if (this.buffer_pos > 0) {
@@ -89,8 +89,8 @@ _kiwi.view.ControlBox = Backbone.View.extend({
 
         case (ev.keyCode === 219 && meta):            // [ + meta
             // Find all the tab elements and get the index of the active tab
-            var $tabs = $('#kiwi .tabs').find('li[class!=connection]');
-            var cur_tab_ind = (function() {
+            $tabs = $('#kiwi .tabs').find('li[class!=connection]');
+            cur_tab_ind = (function() {
                 for (var idx=0; idx<$tabs.length; idx++){
                     if ($($tabs[idx]).hasClass('active'))
                         return idx;
@@ -109,8 +109,8 @@ _kiwi.view.ControlBox = Backbone.View.extend({
 
         case (ev.keyCode === 221 && meta):            // ] + meta
             // Find all the tab elements and get the index of the active tab
-            var $tabs = $('#kiwi .tabs').find('li[class!=connection]');
-            var cur_tab_ind = (function() {
+            $tabs = $('#kiwi .tabs').find('li[class!=connection]');
+            cur_tab_ind = (function() {
                 for (var idx=0; idx<$tabs.length; idx++){
                     if ($($tabs[idx]).hasClass('active'))
                         return idx;
@@ -157,7 +157,7 @@ _kiwi.view.ControlBox = Backbone.View.extend({
             if (inp_val[inp[0].selectionStart - 1] === ' ') {
                 return false;
             }
-            
+
             (function () {
                 var tokens,              // Words before the cursor position
                     val,                 // New value being built up
@@ -216,6 +216,10 @@ _kiwi.view.ControlBox = Backbone.View.extend({
                 }
             }).apply(this);
             return false;
+
+        case (ev.keyCode === 27):       // Escape
+            inp.blur();
+            return false;
         }
     },
 
@@ -223,7 +227,7 @@ _kiwi.view.ControlBox = Backbone.View.extend({
     processInput: function (command_raw) {
         var command, params,
             pre_processed;
-        
+
         // The default command
         if (command_raw[0] !== '/' || command_raw.substr(0, 2) === '//') {
             // Remove any slash escaping at the start (ie. //)

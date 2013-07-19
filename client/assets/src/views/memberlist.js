@@ -1,7 +1,11 @@
 _kiwi.view.MemberList = Backbone.View.extend({
-    tagName: "ul",
+    tagName: "ol",
     events: {
         "click .nick": "nickClick"
+    },
+    attributes: {
+        "aria-live": "polite",
+        "aria-relevant": "additions removals"
     },
     initialize: function (options) {
         this.model.bind('all', this.render, this);
@@ -21,6 +25,10 @@ _kiwi.view.MemberList = Backbone.View.extend({
             member = $target.data('member'),
             userbox;
 
+        if (!$(event.target).hasClass('nick') && !$(event.target).hasClass('prefix')) {
+            return;
+        }
+
         userbox = new _kiwi.view.UserBox();
         userbox.member = member;
         userbox.channel = this.model.channel;
@@ -31,7 +39,7 @@ _kiwi.view.MemberList = Backbone.View.extend({
 
         var menu = new _kiwi.view.MenuBox(member.get('nick') || 'User');
         menu.addItem('userbox', userbox.$el);
-        menu.show();
+        menu.show($(event.currentTarget));
 
         // Position the userbox + menubox
         (function() {
@@ -46,10 +54,12 @@ _kiwi.view.MemberList = Backbone.View.extend({
 
             // Set the new positon
             menu.$el.offset({
-                left: _kiwi.app.view.$el.width() - menu.$el.outerWidth() - 20,
+                left: _kiwi.app.view.$el.width() - menu.$el.outerWidth() - 30,
                 top: t
             });
         }).call(this);
+
+        menu.el.focus();
     },
     show: function () {
         $('#kiwi .memberlists').children().removeClass('active');

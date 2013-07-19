@@ -1,13 +1,14 @@
 _kiwi.view.NickChangeBox = Backbone.View.extend({
     events: {
         'submit': 'changeNick',
-        'click .cancel': 'close'
+        'click .cancel': 'close',
+        'keydown': 'keyDown'
     },
-    
+
     initialize: function () {
         this.$el = $($('#tmpl_nickchange').html().trim());
     },
-    
+
     render: function () {
         // Add the UI component and give it focus
         _kiwi.app.controlbox.$el.prepend(this.$el);
@@ -15,7 +16,7 @@ _kiwi.view.NickChangeBox = Backbone.View.extend({
 
         this.$el.css('bottom', _kiwi.app.controlbox.$el.outerHeight(true));
     },
-    
+
     close: function () {
         this.$el.remove();
 
@@ -30,5 +31,12 @@ _kiwi.view.NickChangeBox = Backbone.View.extend({
             that.close();
         });
         return false;
+    },
+
+    keyDown: function (ev) {
+        if (ev.keyCode === 27) {
+            this.close();
+            return false;
+        }
     }
 });

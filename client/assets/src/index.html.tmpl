@@ -19,33 +19,33 @@
     <div id="kiwi" class="theme_relaxed">
         <div class="toolbar">
             <div class="app_tools">
-                <ul class="main">
-                    <li class="settings"><i class="icon-cogs" title="Settings"></i></li>
-                    <li><a href="https://kiwiirc.com/" target="_blank"><img src="<%base_path%>/assets/img/ico.png" alt="KiwiIRC" title="KiwiIRC" /></a></li>
+                <ul class="main" role="menubar" tabindex="3">
+                    <li class="settings"role="menuitem"><i class="icon-cogs" aria-label="Settings" role="button" title="Settings"></i></li>
+                    <li role="menuitem"><a href="https://kiwiirc.com/" target="_blank"><img src="<%base_path%>/assets/img/ico.png" alt="KiwiIRC" title="KiwiIRC" /></a></li>
                 </ul>
             </div>
 
-            <div class="tabs"></div>
+            <div class="tabs" tabindex="2"></div>
 
             <div class="topic">
-                <div contenteditable="true"></div>
+                <div contenteditable="true" tabindex="4" aria-label="Channel topic" role="status"></div>
             </div>
 
-            <div class="status_message"></div>
+            <div class="status_message" role="alert"></div>
         </div>
 
-        <div class="memberlists_resize_handle"></div>
+        <div class="memberlists_resize_handle" role="separator" aria-orientation="vertical"></div>
 
-        <div class="panels">
+        <div class="panels" role="main">
             <div class="panel_container container1"></div>
         </div>
 
-        <div class="memberlists disabled"></div>
+        <div class="memberlists disabled" aria-label="Channel members" tabindex="4"></div>
 
         <div class="controlbox">
             <div class="input">
-                <span class="nick"> </span>
-                <div class="input_wrap"><textarea class="inp"></textarea></div>
+                <span class="nick" tabindex="5" aria-label="Your nickname"> </span>
+                <div class="input_wrap"><textarea class="inp" tabindex="1"></textarea></div>
                 <div class="input_tools"></div>
             </div>
         </div>
@@ -58,22 +58,22 @@
     
     <script type="text/html" id="tmpl_userbox">
         <div class="userbox">
-            <a class="if_op op"><i class="icon-star"></i>Op</a>
-            <a class="if_op deop"><i class="icon-star-empty"></i>De-op</a>
-            <a class="if_op voice"><i class="icon-volume-up"></i>Voice</a>
-            <a class="if_op devoice"><i class="icon-volume-off"></i>De-voice</a>
-            <a class="if_op kick"><i class="icon-remove"></i>Kick</a>
-            <a class="if_op ban"><i class="icon-ban-circle"></i>Ban</a>
+            <a class="if_op op" tabindex="-1" role="button"><i class="icon-star"></i>Op</a>
+            <a class="if_op deop" tabindex="-1" role="button"><i class="icon-star-empty"></i>De-op</a>
+            <a class="if_op voice" tabindex="-1" role="button"><i class="icon-volume-up"></i>Voice</a>
+            <a class="if_op devoice" tabindex="-1" role="button"><i class="icon-volume-off"></i>De-voice</a>
+            <a class="if_op kick" tabindex="-1" role="button"><i class="icon-remove"></i>Kick</a>
+            <a class="if_op ban" tabindex="-1" role="button"><i class="icon-ban-circle"></i>Ban</a>
 
-            <a class="query"><i class="icon-comment"></i>Message</a>
-            <a class="info"><i class="icon-info-sign"></i>Info</a>
-            <a class="slap"><i class="icon-user-md"></i>Slap!</a>
+            <a class="query" tabindex="-1" role="button"><i class="icon-comment"></i>Message</a>
+            <a class="info" tabindex="-1" role="button"><i class="icon-info-sign"></i>Info</a>
+            <a class="slap" tabindex="-1" role="button"><i class="icon-user-md"></i>Slap!</a>
         </div>
     </script>
     
     <script type="text/html" id="tmpl_nickchange">
-        <form class="nickchange">
-            <label for="nickchange">New nick:</label> <input type="text" mozactionhint="done" autocomplete="off" spellcheck="false"/> <button>Change</button> <a class="cancel">Cancel</a>
+        <form class="nickchange" role="dialog">
+            <label id="nickchange_label" for="nickchange">New nick:</label> <input type="text" mozactionhint="done" autocomplete="off" spellcheck="false" aria-required="true" aria-describedby="nickchange_label" aria-flowto="nickchange_button nickchange_cancel"/> <button id="nickchange_button">Change</button> <a class="cancel" id="nickchange_cancel" role="button">Cancel</a>
         </form>
     </script>
 
@@ -87,7 +87,7 @@
     </script>
 
     <script type="text/html" id="tmpl_server_select">
-        <div class="server_select">
+        <div class="server_select" role="dialog">
 
             <div class="side_panel" style="position:absolute;top:0px;left:320px;">
                 <div class="content" style="position:relative;width:300px;">
@@ -102,25 +102,25 @@
                         <table>
                             <tr class="nick">
                                 <td><label for="server_select_nick">Nickname</label></td>
-                                <td><input type="text" class="nick" id="server_select_nick"></td>
+                                <td><input type="text" class="nick" id="server_select_nick" aria-required="true" aria-flowto="server_select_show_pass"></td>
                             </tr>
 
                             <tr class="have_pass">
                                 <td colspan="2">
-                                    <label for="server_select_show_pass">I have a password</label> <input type="checkbox" id="server_select_show_pass" style="width:auto;" />
+                                    <label for="server_select_show_pass">I have a password</label> <input type="checkbox" id="server_select_show_pass" style="width:auto;" aria-flowto="server_select_password server_select_channel"/>
                                 </td>
                             </tr>
 
                             <tr class="pass">
                                 <td><label for="server_select_password">Password</label></td>
-                                <td><input type="password" class="password" id="server_select_password"></td>
+                                <td><input type="password" class="password" id="server_select_password" aria-flowto="server_select_channel"></td>
                             </tr>
 
                             <tr class="channel">
                                 <td><label for="server_select_channel">Channel</label></td>
                                 <td>
                                     <div style="position:relative;">
-                                        <input type="text" class="channel" id="server_select_channel">
+                                        <input type="text" class="channel" id="server_select_channel" aria-required="true" aria-flowto="server_select_show_channel_key server_select_server_network server_select_start">
                                         <i class="icon-key" title="Channel Key"></i>
                                     </div>
                                 </td>
@@ -128,21 +128,21 @@
 
                             <tr class="have_key">
                                 <td colspan="2">
-                                    <label for="server_select_show_channel_key">Channel requires a key</label> <input type="checkbox" id="server_select_show_channel_key" style="width:auto;" />
+                                    <label for="server_select_show_channel_key">Channel requires a key</label> <input type="checkbox" id="server_select_show_channel_key" style="width:auto;" aria-flowto="server_select_channel_key"/>
                                 </td>
                             </tr>
 
                             <tr class="key">
                                 <td><label for="server_select_channel_key">Key</label></td>
-                                <td><input type="password" class="channel_key" id="server_select_channel_key"></td>
+                                <td><input type="password" class="channel_key" id="server_select_channel_key" aria-flowto="server_select_server_network server_select_start"></td>
                             </tr>
 
                             <tr class="start">
-                                <td colspan="2"><button type="submit">Start..</button></td>
+                                <td colspan="2"><button id="server_select_start" type="submit">Start..</button></td>
                             </tr>
                         </table>
 
-                        <a href="" onclick="return false;" class="show_more">Server and network <i class="icon-caret-down"></i></a>
+                        <a href="" onclick="return false;" class="show_more" id="server_select_server_network" role="button" aria-flowto="server_select_server server_select_start">Server and network <i class="icon-caret-down"></i></a>
                     </div>
 
 
@@ -150,23 +150,23 @@
                         <table>
                             <tr class="server">
                                 <td><label for="server_select_server">Server</label></td>
-                                <td><input type="text" class="server" id="server_select_server"></td>
+                                <td><input type="text" class="server" id="server_select_server" aria-required="true" aria-flowto="server_select_port"></td>
                             <tr>
 
                             <tr class="port">
                                 <td><label for="server_select_port">Port</label></td>
-                                <td><input type="text" class="port" id="server_select_port"></td>
+                                <td><input type="text" class="port" id="server_select_port" aria-required="true" aria-flowto="server_select_ssl"></td>
                             </tr>
 
                             <tr class="ssl">
                                 <td><label for="server_select_ssl">SSL</label></td>
-                                <td><input type="checkbox" class="ssl" id="server_select_ssl"></td>
+                                <td><input type="checkbox" class="ssl" id="server_select_ssl" aria-flowto="server_select_start"></td>
                             </tr>
                         </table>
                     </div>
                 </form>
 
-                <a class="kiwi_logo" href="https://kiwiirc.com/" target="_blank">
+                <a class="kiwi_logo" href="https://kiwiirc.com/" target="_blank" role="banner">
                     <h1><span>Powered by Kiwi IRC</span> <img src="<%base_path%>/assets/img/ico.png" alt="KiwiIRC Logo" title="Kiwi IRC" /></h1>
                 </a>
             </div>
@@ -174,24 +174,24 @@
     </script>
 
     <script type="text/html" id="tmpl_applet_settings">
-        <div class="settings_container">
+        <div class="settings_container" role="dialog">
             <section>
                 <h6>Theme</h6>
                 <div class="control-group">
                     <div class="thumbnails">
-                        <a class="thumbnail" data-setting="theme" data-value="relaxed" href="#">
-                            <div class="thumbnail_wrapper"><div class="theme_color" style="background-color: #e7e7e7;"></div></div>
+                        <a class="thumbnail" data-setting="theme" data-value="relaxed" href="#" role="button">
+                            <div role="presentation" class="thumbnail_wrapper"><div class="theme_color" style="background-color: #e7e7e7;"></div></div>
                             <div class="caption"><u>Relaxed</u></div>
                         </a>
-                        <a class="thumbnail" data-setting="theme" data-value="mini" href="#">
-                            <div class="thumbnail_wrapper"><div class="theme_color" style="background-color: #fff;"></div></div>
+                        <a class="thumbnail" data-setting="theme" data-value="mini" href="#" role="button">
+                            <div role="presentation" class="thumbnail_wrapper"><div class="theme_color" style="background-color: #fff;"></div></div>
                             <div class="caption"><u>Mini</u></div>
                         </a>
-                        <a class="thumbnail" data-setting="theme" data-value="cli" href="#">
-                            <div class="thumbnail_wrapper"><div class="theme_color" style="background-color: #222;"></div></div>
+                        <a class="thumbnail" data-setting="theme" data-value="cli" href="#" role="button">
+                            <div role="presentation" class="thumbnail_wrapper"><div class="theme_color" style="background-color: #222;"></div></div>
                             <div class="caption"><u>CLI</u></div>
                         </a>
-                        <a class="thumbnail" data-setting="theme" data-value="basic" href="#">
+                        <a class="thumbnail" data-setting="theme" data-value="basic" href="#" role="button">
                             <div class="thumbnail_wrapper"><div class="theme_color" style="background-color: #e7e7e7;"></div></div>
                             <div class="caption"><u>Basic</u></div>
                         </a>
@@ -203,16 +203,12 @@
                 <h6>Channels</h6>
                 <div class="control-group">
                     <div class="radio">
-                        <label>
-                            <input type="radio" name="channel_list_style" data-setting="channel_list_style" value="tabs">
-                            Tabs
-                        </label>
+                        <input type="radio" id="channel_list_style_tabs" name="channel_list_style" data-setting="channel_list_style" value="tabs">
+                        <label for="channel_list_style_tabs">Tabs</label>
                     </div>
                     <div class="radio">
-                        <label>
-                            <input type="radio" name="channel_list_style" data-setting="channel_list_style" value="list">
-                            List <small class="text-muted">(for large amouts of channels)</small>
-                        </label>
+                        <input id="channel_list_style_list" type="radio" name="channel_list_style" data-setting="channel_list_style" value="list">
+                        <label for="channel_list_style_list">List <small class="text-muted">(for large amouts of channels)</small></label>
                     </div>
                 </div>
             </section>
@@ -221,27 +217,21 @@
                 <h6>Chat window</h6>
                 <div class="control-group">
                     <div class="checkbox">
-                        <label>
-                            <input data-setting="show_joins_parts" type="checkbox">
-                            Join/part channel notifications
-                        </label>
+                        <input id="join_part_checkbox" data-setting="show_joins_parts" type="checkbox">
+                        <label for="join_part_checkbox">Join/part channel notifications</label>
                     </div>
                     <div class="checkbox">
-                        <label>
-                            <input data-setting="show_timestamps" type="checkbox">
-                            Timestamps
-                        </label>
+                        <input id="timestamps_checkbox" data-setting="show_timestamps" type="checkbox">
+                        <label for="timestamps_checkbox">Timestamps</label>
                     </div>
                     <div class="checkbox">
-                        <label>
-                            <input data-setting="mute_sounds" type="checkbox">
-                            Mute sound notifications
-                        </label>
+                        <input id="mute_sounds_checkbox" data-setting="mute_sounds" type="checkbox">
+                        <label for="mute_sounds_checkbox">Mute sound notifications</label>
                     </div>
-                    <label>
-                        <input data-setting="scrollback" class="input-small" type="text" size="4" pattern="\d*">
-                        <span>messages in scroll history</span>
-                    </label>
+                    <div>
+                        <input id="scrollback_input" data-setting="scrollback" class="input-small" type="text" size="4" pattern="\d*">
+                        <label for="scrollback_input"><span>messages in scroll history</span></label>
+                    </div>
                 </div>
             </section>
 
@@ -258,7 +248,7 @@
 
 
     <script type="text/html" id="tmpl_channel_list">
-        <div>
+        <div aria-live="polite" aria-atomic="true">
             <table style="margin:1em 2em;">
                 <thead style="font-weight: bold;">
                     <tr>

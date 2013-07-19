@@ -56,6 +56,7 @@
             this.network = _kiwi.global.components.Network();
             this.network.on('onlist_channel', this.onListChannel, this);
             this.network.on('onlist_start', this.onListStart, this);
+            this.network.on('onlist_end', this.onListEnd, this);
         },
 
 
@@ -66,7 +67,12 @@
 
         // A new, fresh channel list starting
         onListStart: function (event) {
-            // TODO: clear out our existing list
+            this.view.$el.attr('aria-busy', true);
+            $('tbody:first', this.$el).empty();
+        },
+
+        onListEnd: function (event) {
+            this.view.$el.attr('aria-busy', false);
         },
 
         addChannel: function (channels) {
@@ -78,7 +84,7 @@
             _.each(channels, function (chan) {
                 var row;
                 row = document.createElement("tr");
-                row.innerHTML = '<td><a class="chan" data-channel="' + chan.channel + '">' + _.escape(chan.channel) + '</a></td><td class="num_users" style="text-align: center;">' + chan.num_users + '</td><td style="padding-left: 2em;">' + formatIRCMsg(_.escape(chan.topic)) + '</td>';
+                row.innerHTML = '<td><a class="chan" data-channel="' + chan.channel + '" role="link">' + _.escape(chan.channel) + '</a></td><td class="num_users" style="text-align: center;">' + chan.num_users + '</td><td style="padding-left: 2em;">' + formatIRCMsg(_.escape(chan.topic)) + '</td>';
                 chan.dom = row;
                 that.view.channels.push(chan);
             });
