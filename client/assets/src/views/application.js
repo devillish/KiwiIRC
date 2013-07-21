@@ -262,7 +262,6 @@ _kiwi.view.Application = Backbone.View.extend({
             this.$el.find('.toolbar').slideDown(0);
             $('#kiwi .controlbox').slideDown(0);
             this.doLayout();
-            $('#kiwi .controlbox .inp').focus();
         }
     },
 
