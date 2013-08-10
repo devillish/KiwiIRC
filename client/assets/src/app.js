@@ -1,4 +1,5 @@
-var PluginManager   = require('./models/pluginmanager.js'),
+var Jed             = require('jed'),
+    PluginManager   = require('./models/pluginmanager.js'),
     Application     = require('./models/application.js'),
     DataStore       = require('./models/datastore.js');
 
