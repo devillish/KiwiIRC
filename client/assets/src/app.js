@@ -144,7 +144,7 @@ _kiwi.global = {
 
 // If within a closure, expose the kiwi globals
 if (typeof global !== 'undefined') {
-    global.kiwi = _kiwi.global;
+    global['kiwi'] = _kiwi.global;
 } else {
     // Not within a closure so set a var in the current scope
     var kiwi = _kiwi.global;
