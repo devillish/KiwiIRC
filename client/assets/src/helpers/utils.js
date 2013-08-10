@@ -397,14 +397,14 @@ function escapeRegex (str) {
 module.exports.escapeRegex = escapeRegex;
 
 function getQueryVariable(variable) {
-    var query = window.location.search.substring(1);
-    var vars = query.split('&');
-    for (var i = 0; i < vars.length; i++) {
-        var pair = vars[i].split('=');
-        if (decodeURIComponent(pair[0]) == variable) {
-            return decodeURIComponent(pair[1]);
+    var url = require('url').parse(window.location, true);
+    if (url.query) {
+        if (typeof url.query[variable] !== 'undefined') {
+            return url.query[variable];
         }
     }
+
+    return null;
 }
 
 module.exports.getQueryVariable = getQueryVariable;
