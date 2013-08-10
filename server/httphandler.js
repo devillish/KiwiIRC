@@ -210,73 +210,12 @@ function generateSettings(request, debug, callback) {
                 [
                     'libs/lodash.min.js'
                 ],
-                'libs/backbone.min.js',
-                'libs/jed.js'
+                'libs/backbone.min.js'
             ]
         };
 
     if (debug) {
-        vars.scripts = vars.scripts.concat([
-            'src/app.js',
-            [
-                'src/models/application.js',
-                'src/models/gateway.js'
-            ],
-            [
-                'src/models/newconnection.js',
-                'src/models/panellist.js',
-                'src/models/networkpanellist.js',
-                'src/models/panel.js',
-                'src/models/member.js',
-                'src/models/memberlist.js',
-                'src/models/network.js'
-            ],
-            
-            [
-                'src/models/query.js',
-                'src/models/channel.js',
-                'src/models/server.js',
-                'src/models/applet.js'
-            ],
-
-            [
-                'src/applets/settings.js',
-                'src/applets/chanlist.js',
-                'src/applets/scripteditor.js'
-            ],
-
-            [
-                'src/models/pluginmanager.js',
-                'src/models/datastore.js',
-                'src/helpers/utils.js'
-            ],
-
-            // Some views extend these, so make sure they're loaded beforehand
-            [
-                'src/views/panel.js'
-            ],
-
-            [
-                'src/views/channel.js',
-                'src/views/applet.js',
-                'src/views/application.js',
-                'src/views/apptoolbar.js',
-                'src/views/controlbox.js',
-                'src/views/favicon.js',
-                'src/views/mediamessage.js',
-                'src/views/member.js',
-                'src/views/memberlist.js',
-                'src/views/menubox.js',
-                'src/views/networktabs.js',
-                'src/views/nickchangebox.js',
-                'src/views/resizehandler.js',
-                'src/views/serverselect.js',
-                'src/views/statusmessage.js',
-                'src/views/tabs.js',
-                'src/views/topicbar.js',
-                'src/views/userbox.js'
-            ]
-        ]);
+        vars.scripts.push('kiwi.js');
     } else {
         vars.scripts.push('kiwi.min.js');
     }
