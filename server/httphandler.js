@@ -206,19 +206,8 @@ function generateSettings(request, debug, callback) {
             server_settings: {},
             client_plugins: [],
             translations: [],
-            scripts: [
-                /*[
-                    'libs/lodash.min.js'
-                ],
-                'libs/backbone.min.js'*/
-            ]
+            scripts: debug ? ['kiwi.js'] : ['kiwi.min.js']
         };
-
-    if (debug) {
-        vars.scripts.push('kiwi.js');
-    } else {
-        vars.scripts.push('kiwi.min.js');
-    }
 
     // Any restricted server mode set?
     if (config.get().restrict_server) {
