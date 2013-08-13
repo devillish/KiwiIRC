@@ -1,3 +1,6 @@
+var Backbone    = require('backbone'),
+    _           = require('lodash');
+
 module.exports = function () {
     // Are currently showing all the controlls or just a nick_change box?
     var state = 'all';

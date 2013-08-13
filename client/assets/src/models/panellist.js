@@ -1,5 +1,6 @@
-var Panel   = require('./panel.js'),
-    Tabs    = require('../views/tabs.js');
+var Backbone    = require('backbone'),
+    Panel       = require('./panel.js'),
+    Tabs        = require('../views/tabs.js');
 
 module.exports = Backbone.Collection.extend({
     model: Panel,

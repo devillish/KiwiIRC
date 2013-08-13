@@ -1,3 +1,5 @@
+var Backbone = require('backbone');
+
 module.exports = Backbone.Model.extend({
     initialize: function () {
         this.$plugin_holder = $('<div id="kiwi_plugins" style="display:none;"></div>').appendTo('#kiwi');

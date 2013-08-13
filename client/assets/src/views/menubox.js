@@ -1,3 +1,6 @@
+var Backbone    = require('backbone'),
+    _           = require('lodash');
+
 module.exports = Backbone.View.extend({
     events: {
         'click .ui_menu_foot .close': 'dispose'

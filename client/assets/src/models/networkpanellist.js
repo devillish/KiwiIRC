@@ -1,4 +1,5 @@
-var NetworkTabs = require('../views/networktabs.js'),
+var Backbone    = require('backbone'),
+    NetworkTabs = require('../views/networktabs.js'),
     Network     = require('./network.js');
 
 module.exports = Backbone.Collection.extend({

@@ -1,3 +1,5 @@
+var Backbone = require('backbone');
+
 module.exports = Backbone.View.extend({
     events: {
         'click .settings': 'clickSettings'

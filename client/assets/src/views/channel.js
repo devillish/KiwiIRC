@@ -1,4 +1,5 @@
-var Panel   = require('./panel.js'),
+var _       = require('lodash'),
+    Panel   = require('./panel.js'),
     UserBox = require('./userbox.js'),
     MenuBox = require('./menubox.js');
 

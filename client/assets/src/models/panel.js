@@ -1,4 +1,5 @@
-var PanelView = require('../views/panel.js');
+var Backbone    = require('backbone'),
+    PanelView   = require('../views/panel.js');
 
 module.exports = Backbone.Model.extend({
     initialize: function (attributes) {

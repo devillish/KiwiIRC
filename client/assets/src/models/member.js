@@ -1,4 +1,6 @@
-var Member = require('../views/member.js');
+var Backbone    = require('backbone'),
+    _           = require('lodash'),
+    Member      = require('../views/member.js');
 
 module.exports = Backbone.Model.extend({
     sortModes: function (modes) {

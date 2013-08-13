@@ -1,8 +1,11 @@
 var Jed             = require('jed'),
+    Backbone        = require('backbone'),
+    _               = require('lodash'),
     PluginManager   = require('./models/pluginmanager.js'),
     Application     = require('./models/application.js'),
     DataStore       = require('./models/datastore.js');
 
+Backbone.$ = $;
 _kiwi.applets = {};
 
 
@@ -139,7 +142,6 @@ _kiwi.global = {
         }
     }
 };
-
 
 
 // If within a closure, expose the kiwi globals

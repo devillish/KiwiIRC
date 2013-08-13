@@ -1,4 +1,5 @@
-var AppletView  = require('../views/applet.js'),
+var _           = require('lodash'),
+    AppletView  = require('../views/applet.js'),
     Panel       = require('./panel.js');
 
 var Applet = module.exports = Panel.extend({

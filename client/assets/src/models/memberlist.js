@@ -1,4 +1,5 @@
-var Member          = require('./member.js'),
+var Backbone        = require('backbone'),
+    Member          = require('./member.js'),
     MemberListView  = require('../views/memberlist.js');
 
 module.exports = Backbone.Collection.extend({

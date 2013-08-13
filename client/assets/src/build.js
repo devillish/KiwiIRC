@@ -31,6 +31,8 @@ browserify({
     ]
 })
     .require(__dirname + '/app.js', {expose: 'kiwiirc'})
+    .require('lodash', {expose: 'underscore'})
+    .require('backbone')
     .bundle({debug:true})
     .pipe(sourcemap.transform(function (map, cb) {
         // Extract the inlined, base64-encoded, sourcemap from the generated code and write it to its own file

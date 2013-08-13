@@ -1,5 +1,6 @@
-var Favicon = require('./favicon.js'),
-    utils   = require('../helpers/utils.js');
+var Backbone    = require('backbone'),
+    Favicon     = require('./favicon.js'),
+    utils       = require('../helpers/utils.js');
 
 module.exports = Backbone.View.extend({
     initialize: function () {

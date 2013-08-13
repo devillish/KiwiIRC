@@ -207,10 +207,10 @@ function generateSettings(request, debug, callback) {
             client_plugins: [],
             translations: [],
             scripts: [
-                [
+                /*[
                     'libs/lodash.min.js'
                 ],
-                'libs/backbone.min.js'
+                'libs/backbone.min.js'*/
             ]
         };
 

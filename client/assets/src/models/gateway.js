@@ -1,4 +1,5 @@
-var Network = require('./network.js');
+var Backbone = require('backbone'),
+    Network  = require('./network.js');
 
 module.exports = function () {
 

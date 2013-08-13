@@ -1,3 +1,4 @@
+var Backbone = require('backbone');
 
 var DataStore = module.exports = Backbone.Model.extend({
 	initialize: function () {

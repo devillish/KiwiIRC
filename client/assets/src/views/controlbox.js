@@ -1,4 +1,6 @@
-var NickChangeBox = require('./nickchangebox.js');
+var Backbone        = require('backbone'),
+    _               = require('lodash'),
+    NickChangeBox   = require('./nickchangebox.js');
 
 module.exports = Backbone.View.extend({
     events: {

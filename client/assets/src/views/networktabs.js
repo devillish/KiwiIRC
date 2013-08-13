@@ -1,3 +1,5 @@
+var Backbone = require('backbone');
+
 // Model for this = NetworkPanelList
 module.exports = Backbone.View.extend({
     tagName: 'ul',

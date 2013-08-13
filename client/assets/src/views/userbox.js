@@ -1,4 +1,6 @@
-var Query = require('../models/query.js');
+var Backbone    = require('backbone'),
+    _           = require('lodash'),
+    Query       = require('../models/query.js');
 
 module.exports = Backbone.View.extend({
     events: {

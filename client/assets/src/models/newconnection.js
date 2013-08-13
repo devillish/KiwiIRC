@@ -1,4 +1,5 @@
-var ServerSelect = require('../views/serverselect.js');
+var Backbone        = require('backbone'),
+    ServerSelect    = require('../views/serverselect.js');
 
 module.exports = Backbone.Collection.extend({
     initialize: function() {

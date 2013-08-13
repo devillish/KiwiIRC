@@ -1,4 +1,6 @@
-var MediaMessage    = require('./mediamessage.js'),
+var Backbone        = require('backbone'),
+    _               = require('lodash'),
+    MediaMessage    = require('./mediamessage.js'),
     utils           = require('../helpers/utils.js');
 
 module.exports = Backbone.View.extend({
@@ -112,8 +114,8 @@ module.exports = Backbone.View.extend({
         // Generate a hex string from the nick to be used as a CSS class name
         nick_hex = msg.nick_css_class = '';
         if (msg.nick) {
-            _.map(msg.nick.split(''), function (char) {
-                nick_hex += char.charCodeAt(0).toString(16);
+            _.map(msg.nick.split(''), function (ch) {
+                nick_hex += ch.charCodeAt(0).toString(16);
             });
             msg_css_classes += ' nick_' + nick_hex;
         }

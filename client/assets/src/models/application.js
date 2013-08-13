@@ -1,4 +1,6 @@
-var Applet              = require('./applet.js'),
+var Backbone            = require('backbone'),
+    _                   = require('lodash'),
+    Applet              = require('./applet.js'),
     Panel               = require('./panel.js'),
     Query               = require('./query.js'),
     NetworkPanelList    = require('./networkpanellist.js'),

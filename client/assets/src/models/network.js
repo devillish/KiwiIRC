@@ -1,5 +1,7 @@
 (function () {
-    var Applet          = require('./applet.js'),
+    var Backbone        = require('backbone'),
+        _               = require('lodash'),
+        Applet          = require('./applet.js'),
         Server          = require('./server.js'),
         Channel         = require('./channel.js'),
         Query           = require('./query.js'),

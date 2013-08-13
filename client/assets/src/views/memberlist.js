@@ -1,5 +1,6 @@
-var UserBox = require('./userbox.js'),
-    MenuBox = require('./menubox.js');
+var Backbone    = require('backbone'),
+    UserBox     = require('./userbox.js'),
+    MenuBox     = require('./menubox.js');
 
 module.exports = Backbone.View.extend({
     tagName: "ul",

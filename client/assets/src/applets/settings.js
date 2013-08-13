@@ -1,5 +1,7 @@
 (function () {
-    var Applet = require('../models/applet.js');
+    var Backbone    = require('backbone'),
+        _           = require('lodash'),
+        Applet      = require('../models/applet.js');
 
     var View = Backbone.View.extend({
         events: {
