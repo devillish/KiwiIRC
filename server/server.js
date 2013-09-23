@@ -8,46 +8,47 @@ var daemon = require('daemonize2').setup({
 });
 
 switch (process.argv[2]) {
-    case '-f':
-        require(kiwi_app);
-        break;
+case '-f':
+    require(kiwi_app);
+    break;
 
-    case 'start':
+case 'start':
+    daemon.start();
+    break;
+
+case 'stop':
+    daemon.stop();
+    break;
+
+case 'restart':
+    daemon.stop(function(/*err*/) {
         daemon.start();
-        break;
+    });
+    break;
 
-    case 'stop':
-        daemon.stop();
-        break;
+case 'status':
+    var pid = daemon.status();
+    if (pid) {
+        console.log('Daemon running. PID: ' + pid);
+    } else {
+        console.log('Daemon is not running.');
+    }
+    break;
 
-    case 'restart':
-        daemon.stop(function(err) {
-            daemon.start();
-        });
-        break;
+case 'reconfig':
+    console.log('Loading new config..');
+    daemon.sendSignal("SIGUSR1");
+    break;
 
-    case 'status':
-        var pid = daemon.status();
-        if (pid)
-            console.log('Daemon running. PID: ' + pid);
-        else
-            console.log('Daemon is not running.');
-        break;
+case 'stats':
+    console.log('Writing stats to log file..');
+    daemon.sendSignal("SIGUSR2");
+    break;
 
-    case 'reconfig':
-        console.log('Loading new config..');
-        daemon.sendSignal("SIGUSR1");
-        break;
-
-    case 'stats':
-        console.log('Writing stats to log file..');
-        daemon.sendSignal("SIGUSR2");
-        break;
-
-    case 'build':
-        require('../client/assets/src/build.js');
-        break;
-        
-    default:
-        console.log('Usage: [-f|start|stop|restart|status|reconfig|build]');
+case 'build':
+    require('../client/assets/src/build.js');
+    break;
+    
+default:
+    console.log('Usage: [-f|start|stop|restart|status|reconfig|build]');
 }

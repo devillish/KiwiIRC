@@ -1,12 +1,9 @@
 var engine       = require('engine.io'),
-    WebsocketRpc = require('./websocketrpc.js');
     events       = require('events'),
     http         = require('http'),
-    https        = require('https'),
     util         = require('util'),
     fs           = require('fs'),
     dns          = require('dns'),
-    url          = require('url'),
     _            = require('lodash'),
     spdy         = require('spdy'),
     ipaddr       = require('ipaddr.js'),
@@ -16,7 +13,7 @@ var engine       = require('engine.io'),
 
 
 
-rehash.on('rehashed', function (files) {
+rehash.on('rehashed', function (/*files*/) {
     Client = require('./client.js').Client;
     HttpHandler = require('./httphandler.js').HttpHandler;
 });
@@ -26,7 +23,7 @@ rehash.on('rehashed', function (files) {
 var http_handler;
 
 
-var WebListener = module.exports = function (web_config, transports) {
+var WebListener = module.exports = function (web_config/*, transports*/) {
     var hs, opts,
         that = this;
 

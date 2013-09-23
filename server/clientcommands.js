@@ -74,6 +74,7 @@ var listeners = {
 
 
     JOIN: function (args, irc_connection, callback) {
+        var channels, keys;
         if (args.channel) {
             channels = args.channel.split(",");
             keys = (args.key) ? args.key.split(",") : [];
@@ -112,10 +113,8 @@ var listeners = {
 
 
     QUIT: function (args, irc_connection, callback) {
-        websocket.ircConnection.end('QUIT :' + args.message + '\r\n');
-        websocket.sentQUIT = true;
-        websocket.ircConnection.destroySoon();
-        websocket.disconnect();
+        irc_connection.end('QUIT :' + args.message + '\r\n', callback);
+        irc_connection.dispose();
     },
 
 

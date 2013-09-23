@@ -100,7 +100,7 @@ IrcCommands.addNumeric = function (numeric, handler_name) {
     irc_numerics[numeric + ''] = handler_name +'';
 };
 
-unknownCommand = function (command, data) {
+unknownCommand = function (/*command, data*/) {
     // TODO: Do something here, log?
 };
 
@@ -234,11 +234,11 @@ handlers = {
         });
     },
 
-    'RPL_LISTSTART': function (command) {
+    'RPL_LISTSTART': function (/*command*/) {
         this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' list_start', {});
     },
 
-    'RPL_LISTEND': function (command) {
+    'RPL_LISTEND': function (/*command*/) {
         this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' list_end', {});
     },
 
@@ -256,11 +256,11 @@ handlers = {
         });
     },
 
-    'RPL_MOTDSTART': function (command) {
+    'RPL_MOTDSTART': function (/*command*/) {
         this.irc_connection.emit('server '  + this.irc_connection.irc_host.hostname + ' motd_start', {});
     },
 
-    'RPL_ENDOFMOTD': function (command) {
+    'RPL_ENDOFMOTD': function (/*command*/) {
         this.irc_connection.emit('server '  + this.irc_connection.irc_host.hostname + ' motd_end', {});
     },
 
@@ -390,7 +390,7 @@ handlers = {
 
         if ((command.trailing.charAt(0) === String.fromCharCode(1)) && (command.trailing.charAt(command.trailing.length - 1) === String.fromCharCode(1))) {
             // It's a CTCP response
-            namespace = (command.params[0].toLowerCase() == this.irc_connection.nick.toLowerCase()) ? 'user' : 'channel';
+            namespace = (command.params[0].toLowerCase() === this.irc_connection.nick.toLowerCase()) ? 'user' : 'channel';
             this.irc_connection.emit(namespace + ' ' + command.params[0] + ' ctcp_response', {
                 nick: command.nick,
                 ident: command.ident,
@@ -399,7 +399,7 @@ handlers = {
                 msg: command.trailing.substring(1, command.trailing.length - 1)
             });
         } else {
-            namespace = (command.params[0].toLowerCase() == this.irc_connection.nick.toLowerCase() || command.params[0] == '*') ?
+            namespace = (command.params[0].toLowerCase() === this.irc_connection.nick.toLowerCase() || command.params[0] === '*') ?
                 'user' :
                 'channel';
 
@@ -425,7 +425,9 @@ handlers = {
 
     'TOPIC': function (command) {
         // If we don't have an associated channel, no need to continue
-        if (!command.params[0]) return;
+        if (!command.params[0]) {
+            return;
+        }
 
         var channel = command.params[0],
             topic = command.trailing || '';
@@ -471,19 +473,19 @@ handlers = {
         j = 0;
         for (i = 0; i < command.params[1].length; i++) {
             switch (command.params[1][i]) {
-                case '+':
-                    add = true;
-                    break;
-                case '-':
-                    add = false;
-                    break;
-                default:
-                    if (has_param(command.params[1][i], add)) {
-                        modes.push({mode: (add ? '+' : '-') + command.params[1][i], param: command.params[2 + j]});
-                        j++;
-                    } else {
-                        modes.push({mode: (add ? '+' : '-') + command.params[1][i], param: null});
-                    }
+            case '+':
+                add = true;
+                break;
+            case '-':
+                add = false;
+                break;
+            default:
+                if (has_param(command.params[1][i], add)) {
+                    modes.push({mode: (add ? '+' : '-') + command.params[1][i], param: command.params[2 + j]});
+                    j++;
+                } else {
+                    modes.push({mode: (add ? '+' : '-') + command.params[1][i], param: null});
+                }
             }
         }
 
@@ -513,7 +515,7 @@ handlers = {
             } else if (command.trailing.substr(1, 10) === 'CLIENTINFO') {
                 this.irc_connection.write('NOTICE ' + command.nick + ' :' + String.fromCharCode(1) + 'CLIENTINFO SOURCE VERSION TIME' + String.fromCharCode(1));
             } else {
-                namespace = (command.params[0].toLowerCase() == this.irc_connection.nick.toLowerCase()) ? 'user' : 'channel';
+                namespace = (command.params[0].toLowerCase() === this.irc_connection.nick.toLowerCase()) ? 'user' : 'channel';
                 this.irc_connection.emit(namespace + ' ' + command.nick + ' ctcp_request', {
                     nick: command.nick,
                     ident: command.ident,
@@ -525,7 +527,7 @@ handlers = {
             }
         } else {
             // A message to a user (private message) or to a channel?
-            namespace = (command.params[0].toLowerCase() == this.irc_connection.nick.toLowerCase()) ? 'user ' + command.nick : 'channel ' + command.params[0];
+            namespace = (command.params[0].toLowerCase() === this.irc_connection.nick.toLowerCase()) ? 'user ' + command.nick : 'channel ' + command.params[0];
             this.irc_connection.emit(namespace + ' privmsg', {
                 nick: command.nick,
                 ident: command.ident,
@@ -550,46 +552,46 @@ handlers = {
         }
 
         switch (command.params[1]) {
-            case 'LS':
-                // Compute which of the available capabilities we want and request them
-                request = _.intersection(capabilities, want);
-                if (request.length > 0) {
-                    this.irc_connection.cap.requested = request;
-                    this.irc_connection.write('CAP REQ :' + request.join(' '));
+        case 'LS':
+            // Compute which of the available capabilities we want and request them
+            request = _.intersection(capabilities, want);
+            if (request.length > 0) {
+                this.irc_connection.cap.requested = request;
+                this.irc_connection.write('CAP REQ :' + request.join(' '));
+            } else {
+                this.irc_connection.write('CAP END');
+                this.irc_connection.cap_negotation = false;
+            }
+            break;
+        case 'ACK':
+            if (capabilities.length > 0) {
+                // Update list of enabled capabilities
+                this.irc_connection.cap.enabled = capabilities;
+                // Update list of capabilities we would like to have but that aren't enabled
+                this.irc_connection.cap.requested = _.difference(this.irc_connection.cap.requested, capabilities);
+            }
+            if (this.irc_connection.cap.enabled.length > 0) {
+                if (_.contains(this.irc_connection.cap.enabled, 'sasl')) {
+                    this.irc_connection.sasl = true;
+                    this.irc_connection.write('AUTHENTICATE PLAIN');
                 } else {
                     this.irc_connection.write('CAP END');
                     this.irc_connection.cap_negotation = false;
                 }
-                break;
-            case 'ACK':
-                if (capabilities.length > 0) {
-                    // Update list of enabled capabilities
-                    this.irc_connection.cap.enabled = capabilities;
-                    // Update list of capabilities we would like to have but that aren't enabled
-                    this.irc_connection.cap.requested = _.difference(this.irc_connection.cap.requested, capabilities);
-                }
-                if (this.irc_connection.cap.enabled.length > 0) {
-                    if (_.contains(this.irc_connection.cap.enabled, 'sasl')) {
-                        this.irc_connection.sasl = true;
-                        this.irc_connection.write('AUTHENTICATE PLAIN');
-                    } else {
-                        this.irc_connection.write('CAP END');
-                        this.irc_connection.cap_negotation = false;
-                    }
-                }
-                break;
-            case 'NAK':
-                if (capabilities.length > 0) {
-                    this.irc_connection.cap.requested = _.difference(this.irc_connection.cap.requested, capabilities);
-                }
-                if (this.irc_connection.cap.requested.length > 0) {
-                    this.irc_connection.write('CAP END');
-                    this.irc_connection.cap_negotation = false;
-                }
-                break;
-            case 'LIST':
-                // should we do anything here?
-                break;
+            }
+            break;
+        case 'NAK':
+            if (capabilities.length > 0) {
+                this.irc_connection.cap.requested = _.difference(this.irc_connection.cap.requested, capabilities);
+            }
+            if (this.irc_connection.cap.requested.length > 0) {
+                this.irc_connection.write('CAP END');
+                this.irc_connection.cap_negotation = false;
+            }
+            break;
+        case 'LIST':
+            // should we do anything here?
+            break;
         }
     },
 
@@ -619,29 +621,29 @@ handlers = {
         });
     },
 
-    'RPL_SASLAUTHENTICATED': function (command) {
+    'RPL_SASLAUTHENTICATED': function (/*command*/) {
         this.irc_connection.write('CAP END');
         this.irc_connection.cap_negotation = false;
         this.irc_connection.sasl = true;
     },
 
-    'RPL_SASLLOGGEDIN': function (command) {
+    'RPL_SASLLOGGEDIN': function (/*command*/) {
         if (this.irc_connection.cap_negotation === false) {
             this.irc_connection.write('CAP END');
         }
     },
 
-    'ERR_SASLNOTAUTHORISED': function (command) {
+    'ERR_SASLNOTAUTHORISED': function (/*command*/) {
         this.irc_connection.write('CAP END');
         this.irc_connection.cap_negotation = false;
     },
 
-    'ERR_SASLABORTED': function (command) {
+    'ERR_SASLABORTED': function (/*command*/) {
         this.irc_connection.write('CAP END');
         this.irc_connection.cap_negotation = false;
     },
 
-    'ERR_SASLALREADYAUTHED': function (command) {
+    'ERR_SASLALREADYAUTHED': function (/*command*/) {
         // noop
     },
 
@@ -650,7 +652,7 @@ handlers = {
             reason: command.trailing
         });
     },
-    ERR_PASSWDMISMATCH: function (command) {
+    ERR_PASSWDMISMATCH: function (/*command*/) {
         this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' password_mismatch', {});
     },
 
@@ -746,7 +748,7 @@ handlers = {
         });
     },
 
-    ERR_NOTREGISTERED: function (command) {
+    ERR_NOTREGISTERED: function (/*command*/) {
     },
 
     RPL_MAPMORE: function (command) {
@@ -845,8 +847,9 @@ handlers = {
 
 function genericNotice (command, msg, is_error) {
     // Default to being an error
-    if (typeof is_error !== 'boolean')
+    if (typeof is_error !== 'boolean') {
         is_error = true;
+    }
 
     this.irc_connection.clientEvent('notice', {
         from_server: true,

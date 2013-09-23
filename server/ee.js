@@ -9,12 +9,14 @@ util.inherits(EE, EventEmitter2);
 
 
 EE.prototype.emit = function() {
+	"use strict";
     arguments[0] = arguments[0].toLowerCase();
     EventEmitter2.prototype.emit.apply(this, arguments);
 };
 
 
 EE.prototype.on = function() {
+	"use strict";
     arguments[0] = arguments[0].toLowerCase();
     EventEmitter2.prototype.on.apply(this, arguments);
 };

@@ -1,6 +1,6 @@
-var util        = require('util'),
-    EventBinder = require('./eventbinder.js'),
-    IrcUser     = require('./user.js');
+var EventBinder = require('./eventbinder.js')/*,
+    // TODO: uncomment when using an IrcUser per nick
+    IrcUser     = require('./user.js')*/;
 
 var IrcChannel = function(irc_connection, name) {
     this.irc_connection = irc_connection;
@@ -156,6 +156,8 @@ function onNicklistEnd(event) {
     //updateUsersList.call(this, event.users);
 }
 
+// TODO: uncomment when using an IrcUser per nick
+/*
 function updateUsersList(users) {
     var that = this;
     if (users) {
@@ -166,6 +168,7 @@ function updateUsersList(users) {
         });
     }
 }
+*/
 
 
 function onTopic(event) {
@@ -181,7 +184,7 @@ function onBanList(event) {
     this.ban_list_buffer.push(event);
 }
 
-function onBanListEnd(event) {
+function onBanListEnd(/*event*/) {
     var that = this;
     this.ban_list_buffer.forEach(function (ban) {
         that.irc_connection.clientEvent('banlist', ban);

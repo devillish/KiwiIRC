@@ -1,6 +1,5 @@
-var util    = require('util'),
-    EventBinder  = require('./eventbinder.js'),
-    _ = require('lodash');
+var _ = require('lodash'),
+    EventBinder  = require('./eventbinder.js');
 
 var IrcServer = function (irc_connection) {
     this.irc_connection = irc_connection;
@@ -61,7 +60,7 @@ function onOptions(event) {
     });
 }
 
-function onListStart(event) {
+function onListStart(/*event*/) {
     this.irc_connection.clientEvent('list_start', {});
     this.list_buffer = [];
     this.busy_listing = true;
@@ -70,7 +69,7 @@ function onListStart(event) {
 function onListChannel(event) {
     var buf;
     if (!this.busy_listing) {
-      onListStart.call(this);
+        onListStart.call(this);
     }
     this.list_buffer.push({
         channel: event.channel,
@@ -90,7 +89,7 @@ function onListChannel(event) {
     }
 }
 
-function onListEnd(event) {
+function onListEnd(/*event*/) {
     var buf;
 
     buf = _.sortBy(this.list_buffer, function (channel) {
@@ -106,7 +105,7 @@ function onListEnd(event) {
     this.irc_connection.clientEvent('list_end', {});
 }
 
-function onMotdStart(event) {
+function onMotdStart(/*event*/) {
     this.motd_buffer = '';
 }
 
@@ -114,7 +113,7 @@ function onMotd(event) {
     this.motd_buffer += event.motd;
 }
 
-function onMotdEnd(event) {
+function onMotdEnd(/*event*/) {
     this.irc_connection.clientEvent('motd', {
         msg: this.motd_buffer
     });
@@ -127,7 +126,7 @@ function onError(event) {
     });
 }
 
-function onPasswordMismatch(event) {
+function onPasswordMismatch(/*event*/) {
     this.irc_connection.clientEvent('irc_error', {
         error: 'password_mismatch'
     });

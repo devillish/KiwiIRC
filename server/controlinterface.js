@@ -34,7 +34,9 @@ ControlInterface.prototype.dispose = function() {
 
 
 ControlInterface.prototype.write = function(data, append) {
-    if (typeof append === 'undefined') append = '\n';
+    if (typeof append === 'undefined') {
+        append = '\n';
+    }
     try {
         this.stream_out.write(data + append);
     } catch(err){}
@@ -76,13 +78,13 @@ ControlInterface.prototype.addCommand = function(command, fn) {
 
 
 var commands = {};
-commands.stats = function(args, raw) {
+commands.stats = function(/*args, raw*/) {
     this.write('Connected clients: ' + _.size(global.clients.clients).toString());
     this.write('Num. remote hosts: ' + _.size(global.clients.addresses).toString());
 };
 
 
-commands.reconfig = function(args, raw) {
+commands.reconfig = function(/*args, raw*/) {
     if (config.loadConfig()) {
         this.write('New config file loaded');
     } else {
@@ -91,13 +93,13 @@ commands.reconfig = function(args, raw) {
 };
 
 
-commands.rehash = function(args, raw) {
+commands.rehash = function(/*args, raw*/) {
     rehash.rehashAll();
     this.write('Rehashed');
 };
 
 
-commands.jumpserver = function(args, raw) {
+commands.jumpserver = function(args/*, raw*/) {
     var that = this,
         num_clients = _.size(global.clients.clients),
         packet = {}, args_idx;
@@ -126,38 +128,38 @@ commands.jumpserver = function(args, raw) {
 };
 
 
-commands.module = function(args, raw) {
+commands.module = function(args/*, raw*/) {
     switch(args[0]) {
-        case 'reload':
-            if (!args[1]) {
-                this.write('A module name must be specified');
-                return;
-            }
+    case 'reload':
+        if (!args[1]) {
+            this.write('A module name must be specified');
+            return;
+        }
 
-            if (!kiwiModules.unload(args[1])) {
-                this.write('Module ' + (args[1] || '') + ' is not loaded');
-                return;
-            }
+        if (!kiwiModules.unload(args[1])) {
+            this.write('Module ' + (args[1] || '') + ' is not loaded');
+            return;
+        }
 
-            if (!kiwiModules.load(args[1])) {
-                this.write('Error loading module ' + (args[1] || ''));
-            }
-            this.write('Module ' + args[1] + ' reloaded');
+        if (!kiwiModules.load(args[1])) {
+            this.write('Error loading module ' + (args[1] || ''));
+        }
+        this.write('Module ' + args[1] + ' reloaded');
 
-            break;
+        break;
 
-        case 'list':
-        case 'ls':
-        default:
-            var module_names = [];
-            kiwiModules.getRegisteredModules().forEach(function(module) {
-                module_names.push(module.module_name);
-            });
-            this.write('Loaded modules: ' + module_names.join(', '));
+    default:
+    case 'list':
+    case 'ls':
+        var module_names = [];
+        kiwiModules.getRegisteredModules().forEach(function(module) {
+            module_names.push(module.module_name);
+        });
+        this.write('Loaded modules: ' + module_names.join(', '));
     }
 };
 
 
-commands.hello = function(args, raw) {
+commands.hello = function(/*args, raw*/) {
     this.write('Hello, beautiful :)');
 };

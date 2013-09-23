@@ -32,7 +32,9 @@ if (process.argv.indexOf('-f') === -1 && global.config && global.config.log) {
             out = util.format.apply(util, arguments);
 
             // Make sure we out somthing to log and we have an open file
-            if (!out || !logfile) return;
+            if (!out || !logfile) {
+                return;
+            }
 
             out += '\n';
             fs.writeSync(logfile, out, null);
@@ -166,7 +168,7 @@ global.servers = {
     },
 
     removeConnection: function (connection) {
-        var host = connection.irc_host.hostname
+        var host = connection.irc_host.hostname;
         if (this.servers[host]) {
             this.servers[host] = _.without(this.servers[host], connection);
             if (this.servers[host].length === 0) {
@@ -203,7 +205,7 @@ if (global.config.identd && global.config.identd.enabled) {
     var identd_resolve_user = function(port_here, port_there) {
         var key = port_here.toString() + '_' + port_there.toString();
 
-        if (typeof global.clients.port_pairs[key] == 'undefined') {
+        if (typeof global.clients.port_pairs[key] === 'undefined') {
             return;
         }
 
@@ -232,11 +234,11 @@ _.each(global.config.servers, function (server) {
     var wl = new WebListener(server, global.config.transports);
 
     wl.on('connection', function (client) {
-        clients.add(client);
+        global.clients.add(client);
     });
 
     wl.on('client_dispose', function (client) {
-        clients.remove(client);
+        global.clients.remove(client);
     });
 
     wl.on('listening', function () {

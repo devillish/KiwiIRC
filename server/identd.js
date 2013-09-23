@@ -27,8 +27,9 @@ var IdentdServer = module.exports = function(opts) {
             if (buffer.length < 512) {
 
                 // Wait until we have a full line of data before processing it
-                if (buffer.indexOf('\n') === -1)
+                if (buffer.indexOf('\n') === -1) {
                     return;
+                }
 
                 // Get the first line of data and process it for a rsponse
                 data_line = buffer.split('\n')[0];
@@ -66,18 +67,22 @@ var IdentdServer = module.exports = function(opts) {
     this.processLine = function(line) {
         var ports = line.split(','),
             port_here = 0,
-            port_there = 0;
+            port_there = 0,
+            user,
+            system;
 
         // We need 2 port number to make this work
-        if (ports.length < 2)
+        if (ports.length < 2) {
             return;
+        }
 
         port_here = parseInt(ports[0], 10);
         port_there = parseInt(ports[1], 10);
 
         // Make sure we have both ports to work with
-        if (!port_here || !port_there)
+        if (!port_here || !port_there) {
             return;
+        }
 
         if (typeof opts.user_id === 'function') {
             user = (opts.user_id(port_here, port_there) || '').toString() || default_user_id;

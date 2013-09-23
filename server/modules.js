@@ -1,7 +1,4 @@
-var events = require('events'),
-    util = require('util'),
-    _ = require('lodash'),
-    EventPublisher = require('./plugininterface.js');
+var _ = require('lodash');
 
 
 /**
@@ -14,7 +11,7 @@ var active_publisher;
 
 
 // Create a publisher to allow event subscribing
-function Publisher (obj) {
+function Publisher (/*obj*/) {
     var EventPublisher = require('./plugininterface.js');
     return new EventPublisher();
 }
@@ -141,7 +138,7 @@ Module.prototype.off = function (event_name, fn) {
 // Clean up anything used by this module
 Module.prototype.dispose = function () {
     // Call any dispose callbacks
-    (this._events['dispose'] || []).forEach(function (callback) {
+    (this._events.dispose || []).forEach(function (callback) {
         callback();
     });
 

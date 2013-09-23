@@ -154,8 +154,8 @@ function serveSettings(request, response) {
         settings;
 
     // Check the referrer for a debug option
-    if (request.headers['referer']) {
-        referrer_url = url.parse(request.headers['referer'], true);
+    if (request.headers.referer) {
+        referrer_url = url.parse(request.headers.referer, true);
         if (referrer_url.query && referrer_url.query.debug) {
             debug = true;
         }
@@ -314,10 +314,9 @@ function generateSettings(request, debug, callback) {
             return callback(err);
         }
 
-        var translation_files;
         translations = JSON.parse(translations);
         fs.readdir(__dirname + '/../client/assets/src/translations/', function (err, pofiles) {
-            var hash, settings;
+            var settings;
             if (err) {
                 return callback(err);
             }

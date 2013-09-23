@@ -5,8 +5,6 @@
 */
 
 function WebsocketRpc(eio_socket) {
-    var self = this;
-
     this._next_id = 0;
     this._rpc_callbacks = {};
     this._socket = eio_socket;
@@ -47,8 +45,9 @@ WebsocketRpc.prototype._mixinEmitter = function() {
     var funcs = ['on', 'once', 'off', 'removeListener', 'removeAllListeners', 'emit', 'listeners', 'hasListeners'];
 
     for (var i=0; i<funcs.length; i++) {
-        if (typeof this._socket[funcs[i]] === 'function')
+        if (typeof this._socket[funcs[i]] === 'function') {
             this[funcs[i]] = this._socket[funcs[i]];
+        }
     }
 };
 
@@ -111,8 +110,9 @@ WebsocketRpc.prototype.call = function(method) {
  * Encode the packet into JSON and send it over the websocket
  */
 WebsocketRpc.prototype.send = function(packet) {
-    if (this._socket)
+    if (this._socket) {
         this._socket.send(JSON.stringify(packet));
+    }
 };
 
 
@@ -120,22 +120,24 @@ WebsocketRpc.prototype.send = function(packet) {
  * Handler for the websocket `message` event
  */
 WebsocketRpc.prototype._onMessage = function(message_raw) {
-    var self = this,
-        packet,
+    var packet,
         returnFn,
         callback;
 
     try {
         packet = JSON.parse(message_raw);
-        if (!packet) throw 'Corrupt packet';
+        if (!packet) {
+            throw 'Corrupt packet';
+        }
     } catch(err) {
         return;
     }
 
     if (this._isResponse(packet)) {
         // If we have no callback waiting for this response, don't do anything
-        if (typeof this._rpc_callbacks[packet.id] !== 'function')
+        if (typeof this._rpc_callbacks[packet.id] !== 'function') {
             return;
+        }
 
         // Delete the callback before calling it. If any exceptions accur within the callback
         // we don't have to worry about the delete not happening

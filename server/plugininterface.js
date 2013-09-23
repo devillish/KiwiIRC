@@ -86,7 +86,9 @@ function EmitCall (event_name, event_data) {
 
         // Call the completed/prevented functions
         (funcs || []).forEach(function (fn) {
-            if (typeof fn === 'function') fn();
+            if (typeof fn === 'function') {
+                fn();
+            }
         });
     }
 
@@ -94,12 +96,16 @@ function EmitCall (event_name, event_data) {
 
     function addCompletedFunc(fn) {
         // Only accept functions
-        if (typeof fn !== 'function') return false;
+        if (typeof fn !== 'function') {
+            return false;
+        }
 
         completed_fn.push(fn);
 
         // If we have already completed the emits, call this now
-        if (completed && !prevented) fn();
+        if (completed && !prevented) {
+            fn();
+        }
 
         return this;
     }
@@ -108,12 +114,16 @@ function EmitCall (event_name, event_data) {
 
     function addPreventedFunc(fn) {
         // Only accept functions
-        if (typeof fn !== 'function') return false;
+        if (typeof fn !== 'function') {
+            return false;
+        }
 
         prevented_fn.push(fn);
 
         // If we have already completed the emits, call this now
-        if (completed && prevented) fn();
+        if (completed && prevented) {
+            fn();
+        }
 
         return this;
     }
