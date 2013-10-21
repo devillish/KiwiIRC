@@ -513,6 +513,8 @@ _kiwi.model.Application = function () {
                 _kiwi.gateway.changeNick(null, ev.params[0]);
             });
 
+            controlbox.on('command:quit', quitCommand);
+
             controlbox.on('command:query', queryCommand);
 
             controlbox.on('command:invite', inviteCommand);
@@ -684,6 +686,10 @@ _kiwi.model.Application = function () {
             // Show the last channel if we have one
             if (panels.length)
                 panels[panels.length - 1].view.show();
+        }
+
+        function quitCommand(ev) {
+            that.connections.active_connection.gateway.quit(ev.params.join(' '));
         }
 
         function queryCommand (ev) {

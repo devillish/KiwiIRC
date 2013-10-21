@@ -65,7 +65,8 @@ _kiwi.global = {
             var funcs = {
                 kiwi: 'kiwi', raw: 'raw', kick: 'kick', topic: 'topic',
                 part: 'part', join: 'join', action: 'action', ctcp: 'ctcp',
-                notice: 'notice', msg: 'privmsg', changeNick: 'changeNick'
+                notice: 'notice', msg: 'privmsg', changeNick: 'changeNick',
+                quit: 'quit'
             };
 
             // Proxy each gateway method
