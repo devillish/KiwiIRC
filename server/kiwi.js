@@ -158,7 +158,7 @@ global.servers = {
     servers: Object.create(null),
 
     addConnection: function (connection) {
-        var host = connection.irc_host.hostname;
+        var host = connection.options.host;
         if (!this.servers[host]) {
             this.servers[host] = [];
         }
@@ -166,7 +166,7 @@ global.servers = {
     },
 
     removeConnection: function (connection) {
-        var host = connection.irc_host.hostname
+        var host = connection.options.host;
         if (this.servers[host]) {
             this.servers[host] = _.without(this.servers[host], connection);
             if (this.servers[host].length === 0) {

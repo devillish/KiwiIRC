@@ -1,9 +1,7 @@
 var util             = require('util'),
     events           = require('events'),
     crypto           = require('crypto'),
-    _                = require('lodash'),
-    State            = require('./irc/state.js'),
-    IrcConnection    = require('./irc/connection.js').IrcConnection,
+    ClientState      = require('./irc/clientstate.js'),
     ClientCommands   = require('./clientcommands.js'),
     WebsocketRpc     = require('./websocketrpc.js');
 
@@ -25,7 +23,7 @@ var Client = function (websocket) {
         .update(Math.floor(Math.random() * 100000).toString())
         .digest('hex');
 
-    this.state = new State(this);
+    this.state = new ClientState(this);
 
     this.buffer = {
         list: [],
@@ -83,12 +81,12 @@ function handleClientMessage(msg, callback) {
     // Make sure we have a server number specified
     if ((msg.server === null) || (typeof msg.server !== 'number')) {
         return (typeof callback === 'function') ? callback('server not specified') : undefined;
-    } else if (!this.state.irc_connections[msg.server]) {
+    } else if (!this.state.connection_states[msg.server].irc_connection) {
         return (typeof callback === 'function') ? callback('not connected to server') : undefined;
     }
 
     // The server this command is directed to
-    server = this.state.irc_connections[msg.server];
+    server = this.state.connection_states[msg.server].irc_connection;
 
     if (typeof callback !== 'function') {
         callback = null;

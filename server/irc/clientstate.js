@@ -1,40 +1,41 @@
 var util            = require('util'),
     events          = require('events'),
     _               = require('lodash'),
-    IrcConnection   = require('./connection.js').IrcConnection;
+    ConnectionState = require('./connectionstate.js');
 
-var State = function (client, save_state) {
+var ClientState = function (client, save_state) {
     var that = this;
 
     events.EventEmitter.call(this);
     this.client = client;
     this.save_state = save_state || false;
-    
-    this.irc_connections = [];
+
+    this.connection_states = [];
     this.next_connection = 0;
-    
+
     this.client.on('dispose', function () {
         if (!that.save_state) {
-            _.each(that.irc_connections, function (irc_connection, i, cons) {
-                if (irc_connection) {
-                    irc_connection.end('QUIT :' + (global.config.quit_message || ''));
-                    global.servers.removeConnection(irc_connection);
+            _.each(that.connection_states, function (connection_state, i, cons) {
+                if (connection_state && connection_state.irc_connection) {
+                    connection_state.irc_connection.end('QUIT :' + (global.config.quit_message || ''));
+                    global.servers.removeConnection(connection_state);
                     cons[i] = null;
                 }
             });
-            
+
             that.dispose();
         }
     });
 };
 
-util.inherits(State, events.EventEmitter);
+util.inherits(ClientState, events.EventEmitter);
 
-module.exports = State;
+module.exports = ClientState;
 
-State.prototype.connect = function (hostname, port, ssl, nick, user, options, callback) {
-    var that = this;
-    var con, con_num;
+ClientState.prototype.connect = function (hostname, port, ssl, nick, user, options, callback) {
+    var that = this,
+        con,
+        con_num;
 
     // Check the per-server limit on the number of connections
     if ((global.config.max_server_conns > 0) &&
@@ -47,52 +48,55 @@ State.prototype.connect = function (hostname, port, ssl, nick, user, options, ca
     }
 
     con_num = this.next_connection++;
-    con = new IrcConnection(
-        hostname,
-        port,
-        ssl,
-        nick,
-        user,
-        options,
-        this,
-        con_num);
+    con = new ConnectionState({
+        host: hostname,
+        port: port,
+        ssl: ssl,
+        nick: nick,
+        user: user,
+        password: options.password,
+        encoding: options.encoding,
+    }, function ClientEventCb(command, data) {
+        data.server = con_num;
+        that.sendIrcCommand.call(that, command, data);
+    });
 
-    this.irc_connections[con_num] = con;
+    this.connection_states[con_num] = con;
 
-    con.on('connected', function IrcConnectionConnection() {
+    con.on('connected', function ConnectionStateConnection() {
         global.servers.addConnection(this);
         return callback(null, con_num);
     });
 
-    con.on('error', function IrcConnectionError(err) {
+    con.on('error', function ConnectionStateError(err) {
         console.log('irc_connection error (' + hostname + '):', err);
         return callback(err.code);
     });
 
-    con.on('close', function IrcConnectionClose() {
+    con.on('close', function ConnectionStateClose() {
         // TODO: Can we get a better reason for the disconnection? Was it planned?
         that.sendIrcCommand('disconnect', {server: con.con_num, reason: 'disconnected'});
 
-        that.irc_connections[con_num] = null;
+        that.connection_states[con_num] = null;
         global.servers.removeConnection(this);
     });
 
     // Call any modules before making the connection
-    global.modules.emit('irc connecting', {connection: con})
+    global.modules.emit('irc connecting', {connection: con.irc_connection})
         .done(function () {
             con.connect();
         });
 };
 
-State.prototype.sendIrcCommand = function () {
+ClientState.prototype.sendIrcCommand = function () {
     this.client.sendIrcCommand.apply(this.client, arguments);
 };
 
-State.prototype.sendKiwiCommand = function () {
+ClientState.prototype.sendKiwiCommand = function () {
     this.client.sendKiwicommand.apply(this.client, arguments);
 };
 
-State.prototype.dispose = function () {
+ClientState.prototype.dispose = function () {
     this.emit('dispose');
     this.removeAllListeners();
 };

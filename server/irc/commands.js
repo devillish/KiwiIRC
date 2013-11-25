@@ -1,4 +1,6 @@
-var _ = require('lodash'),
+var util    = require('util'),
+    EE      = require('../ee.js'),
+    _       = require('lodash'),
     irc_numerics,
     IrcCommands,
     handlers,
@@ -79,9 +81,16 @@ irc_numerics = {
 };
 
 
-IrcCommands = function (irc_connection) {
+IrcCommands = function (state, irc_connection, client_event) {
+    EE.call(this,{
+        wildcard: true,
+        delimiter: ' '
+    });
+    this.state = state;
     this.irc_connection = irc_connection;
+    this.client_event = client_event;
 };
+util.inherits(IrcCommands, EE);
 module.exports = IrcCommands;
 
 IrcCommands.prototype.dispatch = function (command, data) {
@@ -110,7 +119,7 @@ IrcCommands.addNumeric = function (numeric, handler_name) {
 unknownCommand = function (command, data) {
     var params = _.clone(data.params);
 
-    this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' unknown_command', {
+    this.emit('server ' + this.state.options.host + ' unknown_command', {
         command: command,
         params: params,
         trailing: data.trailing
@@ -118,7 +127,7 @@ unknownCommand = function (command, data) {
 
 
 /*
-            this.irc_connection.emit(namespace + ' ' + command.params[0] + ' notice', {
+            this.emit(namespace + ' ' + command.params[0] + ' notice', {
                 from_server: command.prefix ? true : false,
                 nick: command.nick || command.prefix || undefined,
                 ident: command.ident,
@@ -127,15 +136,15 @@ unknownCommand = function (command, data) {
                 msg: command.trailing
             });
             */
- };
+};
 
 
 handlers = {
     'RPL_WELCOME': function (command) {
         var nick =  command.params[0];
-        this.irc_connection.registered = true;
+        this.state.registered = true;
         this.cap_negotation = false;
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' connect', {
+        this.emit('server ' + this.state.options.host + ' connect', {
             nick: nick
         });
     },
@@ -165,28 +174,28 @@ handlers = {
                 }
             }
         }
-        this.irc_connection.emit('server '  + this.irc_connection.irc_host.hostname + ' options', {
+        this.emit('server '  + this.state.options.host + ' options', {
             options: this.irc_connection.options,
             cap: this.irc_connection.cap.enabled
         });
     },
 
     'RPL_ENDOFWHOIS': function (command) {
-        this.irc_connection.emit('user ' + command.params[1] + ' endofwhois', {
+        this.emit('user ' + command.params[1] + ' endofwhois', {
             nick: command.params[1],
             msg: command.trailing
         });
     },
 
     'RPL_AWAY': function (command) {
-        this.irc_connection.emit('user ' + command.params[1] + ' whoisaway', {
+        this.emit('user ' + command.params[1] + ' whoisaway', {
             nick: command.params[1],
             reason: command.trailing
         });
     },
 
     'RPL_WHOISUSER': function (command) {
-        this.irc_connection.emit('user ' + command.params[1] + ' whoisuser', {
+        this.emit('user ' + command.params[1] + ' whoisuser', {
             nick: command.params[1],
             ident: command.params[2],
             host: command.params[3],
@@ -195,7 +204,7 @@ handlers = {
     },
 
     'RPL_WHOISSERVER': function (command) {
-        this.irc_connection.emit('user ' + command.params[1] + ' whoisserver', {
+        this.emit('user ' + command.params[1] + ' whoisserver', {
             nick: command.params[1],
             irc_server: command.params[2],
             server_info: command.trailing
@@ -203,28 +212,28 @@ handlers = {
     },
 
     'RPL_WHOISOPERATOR': function (command) {
-        this.irc_connection.emit('user ' + command.params[1] + ' whoisoperator', {
+        this.emit('user ' + command.params[1] + ' whoisoperator', {
             nick: command.params[1],
             msg: command.trailing
         });
     },
 
     'RPL_WHOISCHANNELS':       function (command) {
-        this.irc_connection.emit('user ' + command.params[1] + ' whoischannels', {
+        this.emit('user ' + command.params[1] + ' whoischannels', {
             nick: command.params[1],
             chans: command.trailing
         });
     },
 
     'RPL_WHOISMODES': function (command) {
-        this.irc_connection.emit('user ' + command.params[1] + ' whoismodes', {
+        this.emit('user ' + command.params[1] + ' whoismodes', {
             nick: command.params[1],
             msg: command.trailing
         });
     },
 
     'RPL_WHOISIDLE': function (command) {
-        this.irc_connection.emit('user ' + command.params[1] + ' whoisidle', {
+        this.emit('user ' + command.params[1] + ' whoisidle', {
             nick: command.params[1],
             idle: command.params[2],
             logon: command.params[3] || undefined
@@ -232,34 +241,34 @@ handlers = {
     },
 
     'RPL_WHOISREGNICK': function (command) {
-        this.irc_connection.emit('user ' + command.params[1] + ' whoisregnick', {
+        this.emit('user ' + command.params[1] + ' whoisregnick', {
             nick: command.params[1],
             msg: command.trailing
         });
     },
 
     'RPL_WHOISHOST': function (command) {
-        this.irc_connection.emit('user ' + command.params[1] + ' whoishost', {
+        this.emit('user ' + command.params[1] + ' whoishost', {
             nick: command.params[1],
             msg: command.trailing
         });
     },
 
     'RPL_WHOISSECURE': function (command) {
-        this.irc_connection.emit('user ' + command.params[1] + ' whoissecure', {
+        this.emit('user ' + command.params[1] + ' whoissecure', {
             nick: command.params[1]
         });
     },
 
     'RPL_WHOISACCOUNT': function (command) {
-        this.irc_connection.emit('user ' + command.params[1] + ' whoisaccount', {
+        this.emit('user ' + command.params[1] + ' whoisaccount', {
             nick: command.params[1],
             account: command.params[2]
         });
     },
 
     'RPL_WHOWASUSER': function (command) {
-        this.irc_connection.emit('user ' + command.params[1] + ' whowas', {
+        this.emit('user ' + command.params[1] + ' whowas', {
             nick: command.params[1],
             ident: command.params[2],
             host: command.params[3],
@@ -268,27 +277,27 @@ handlers = {
     },
 
     'RPL_ENDOFWHOWAS': function (command) {
-        this.irc_connection.emit('user ' + command.params[1] + ' endofwhowas', {
+        this.emit('user ' + command.params[1] + ' endofwhowas', {
             nick: command.params[1]
         });
     },
 
     'ERR_WASNOSUCHNICK': function (command) {
-        this.irc_connection.emit('user ' + command.params[1] + ' wasnosucknick', {
+        this.emit('user ' + command.params[1] + ' wasnosucknick', {
             nick: command.params[1]
         });
     },
 
     'RPL_LISTSTART': function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' list_start', {});
+        this.emit('server ' + this.state.options.host + ' list_start', {});
     },
 
     'RPL_LISTEND': function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' list_end', {});
+        this.emit('server ' + this.state.options.host + ' list_end', {});
     },
 
     'RPL_LIST': function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' list_channel', {
+        this.emit('server ' + this.state.options.host + ' list_channel', {
             channel: command.params[1],
             num_users: parseInt(command.params[2], 10),
             topic: command.trailing
@@ -296,17 +305,17 @@ handlers = {
     },
 
     'RPL_MOTD': function (command) {
-        this.irc_connection.emit('server '  + this.irc_connection.irc_host.hostname + ' motd', {
+        this.emit('server '  + this.state.options.host + ' motd', {
             motd: command.trailing + '\n'
         });
     },
 
     'RPL_MOTDSTART': function (command) {
-        this.irc_connection.emit('server '  + this.irc_connection.irc_host.hostname + ' motd_start', {});
+        this.emit('server '  + this.state.options.host + ' motd_start', {});
     },
 
     'RPL_ENDOFMOTD': function (command) {
-        this.irc_connection.emit('server '  + this.irc_connection.irc_host.hostname + ' motd_end', {});
+        this.emit('server '  + this.state.options.host + ' motd_end', {});
     },
 
     'RPL_NAMEREPLY': function (command) {
@@ -331,14 +340,14 @@ handlers = {
             member_list.push({nick: member, modes: modes});
         });
 
-        this.irc_connection.emit('channel ' + command.params[2] + ' userlist', {
+        this.emit('channel ' + command.params[2] + ' userlist', {
             users: member_list,
             channel: command.params[2]
         });
     },
 
     'RPL_ENDOFNAMES': function (command) {
-        this.irc_connection.emit('channel ' + command.params[1] + ' userlist_end', {
+        this.emit('channel ' + command.params[1] + ' userlist_end', {
             channel: command.params[1]
         });
     },
@@ -356,7 +365,7 @@ handlers = {
     },
 
     'RPL_BANLIST': function (command) {
-        this.irc_connection.emit('channel ' + command.params[1] + ' banlist', {
+        this.emit('channel ' + command.params[1] + ' banlist', {
             channel: command.params[1],
             banned: command.params[2],
             banned_by: command.params[3],
@@ -365,27 +374,27 @@ handlers = {
     },
 
     'RPL_ENDOFBANLIST': function (command) {
-        this.irc_connection.emit('channel ' + command.params[1] + ' banlist_end', {
+        this.emit('channel ' + command.params[1] + ' banlist_end', {
             channel: command.params[1]
         });
     },
 
     'RPL_TOPIC': function (command) {
-        this.irc_connection.emit('channel ' + command.params[1] + ' topic', {
+        this.emit('channel ' + command.params[1] + ' topic', {
             channel: command.params[1],
             topic: command.trailing
         });
     },
 
     'RPL_NOTOPIC': function (command) {
-        this.irc_connection.emit('channel ' + command.params[1] + ' topic', {
+        this.emit('channel ' + command.params[1] + ' topic', {
             channel: command.params[1],
             topic: ''
         });
     },
 
     'RPL_TOPICWHOTIME': function (command) {
-        this.irc_connection.emit('channel ' + command.params[1] + ' topicsetby', {
+        this.emit('channel ' + command.params[1] + ' topicsetby', {
             nick: command.params[2],
             channel: command.params[1],
             when: command.params[3]
@@ -393,7 +402,7 @@ handlers = {
     },
 
     'RPL_INVITING': function (command) {
-        this.irc_connection.emit('channel ' + command.params[1] + ' invited', {
+        this.emit('channel ' + command.params[1] + ' invited', {
             nick: command.params[0],
             channel: command.params[1]
         });
@@ -414,7 +423,7 @@ handlers = {
         // Check if we have a server-time
         time = getServerTime.call(this, command);
 
-        this.irc_connection.emit('channel ' + channel + ' join', {
+        this.emit('channel ' + channel + ' join', {
             nick: command.nick,
             ident: command.ident,
             hostname: command.hostname,
@@ -429,7 +438,7 @@ handlers = {
         // Check if we have a server-time
         time = getServerTime.call(this, command);
 
-        this.irc_connection.emit('channel ' + command.params[0] + ' part', {
+        this.emit('channel ' + command.params[0] + ' part', {
             nick: command.nick,
             ident: command.ident,
             hostname: command.hostname,
@@ -445,7 +454,7 @@ handlers = {
         // Check if we have a server-time
         time = getServerTime.call(this, command);
 
-        this.irc_connection.emit('channel ' + command.params[0] + ' kick', {
+        this.emit('channel ' + command.params[0] + ' kick', {
             kicked: command.params[1],
             nick: command.nick,
             ident: command.ident,
@@ -462,7 +471,7 @@ handlers = {
         // Check if we have a server-time
         time = getServerTime.call(this, command);
 
-        this.irc_connection.emit('user ' + command.nick + ' quit', {
+        this.emit('user ' + command.nick + ' quit', {
             nick: command.nick,
             ident: command.ident,
             hostname: command.hostname,
@@ -481,8 +490,8 @@ handlers = {
 
         if ((command.trailing.charAt(0) === String.fromCharCode(1)) && (command.trailing.charAt(command.trailing.length - 1) === String.fromCharCode(1))) {
             // It's a CTCP response
-            namespace = (command.params[0].toLowerCase() == this.irc_connection.nick.toLowerCase()) ? 'user' : 'channel';
-            this.irc_connection.emit(namespace + ' ' + command.params[0] + ' ctcp_response', {
+            namespace = (command.params[0].toLowerCase() == this.state.options.nick.toLowerCase()) ? 'user' : 'channel';
+            this.emit(namespace + ' ' + command.params[0] + ' ctcp_response', {
                 nick: command.nick,
                 ident: command.ident,
                 hostname: command.hostname,
@@ -491,11 +500,11 @@ handlers = {
                 time: time
             });
         } else {
-            namespace = (command.params[0].toLowerCase() == this.irc_connection.nick.toLowerCase() || command.params[0] == '*') ?
+            namespace = (command.params[0].toLowerCase() == this.state.options.nick.toLowerCase() || command.params[0] == '*') ?
                 'user' :
                 'channel';
 
-            this.irc_connection.emit(namespace + ' ' + command.params[0] + ' notice', {
+            this.emit(namespace + ' ' + command.params[0] + ' notice', {
                 from_server: command.prefix ? true : false,
                 nick: command.nick || command.prefix || undefined,
                 ident: command.ident,
@@ -513,7 +522,7 @@ handlers = {
         // Check if we have a server-time
         time = getServerTime.call(this, command);
 
-        this.irc_connection.emit('user ' + command.nick + ' nick', {
+        this.emit('user ' + command.nick + ' nick', {
             nick: command.nick,
             ident: command.ident,
             hostname: command.hostname,
@@ -534,7 +543,7 @@ handlers = {
         var channel = command.params[0],
             topic = command.trailing || '';
 
-        this.irc_connection.emit('channel ' + channel + ' topic', {
+        this.emit('channel ' + channel + ' topic', {
             nick: command.nick,
             channel: channel,
             topic: topic,
@@ -597,7 +606,7 @@ handlers = {
 
         event = (_.contains(this.irc_connection.options.CHANTYPES, command.params[0][0]) ? 'channel ' : 'user ') + command.params[0] + ' mode';
 
-        this.irc_connection.emit(event, {
+        this.emit(event, {
             target: command.params[0],
             nick: command.nick || command.prefix || '',
             modes: modes,
@@ -614,7 +623,7 @@ handlers = {
         if ((command.trailing.charAt(0) === String.fromCharCode(1)) && (command.trailing.charAt(command.trailing.length - 1) === String.fromCharCode(1))) {
             //CTCP request
             if (command.trailing.substr(1, 6) === 'ACTION') {
-                this.irc_connection.clientEvent('action', {
+                this.client_event('action', {
                     nick: command.nick,
                     ident: command.ident,
                     hostname: command.hostname,
@@ -625,7 +634,7 @@ handlers = {
             } else if (command.trailing.substr(1, 4) === 'KIWI') {
                 tmp = command.trailing.substring(6, command.trailing.length - 1);
                 namespace = tmp.split(' ', 1)[0];
-                this.irc_connection.clientEvent('kiwi', {
+                this.client_event('kiwi', {
                     namespace: namespace,
                     data: tmp.substr(namespace.length + 1),
                     time: time
@@ -637,8 +646,8 @@ handlers = {
             } else if (command.trailing.substr(1, 10) === 'CLIENTINFO') {
                 this.irc_connection.write('NOTICE ' + command.nick + ' :' + String.fromCharCode(1) + 'CLIENTINFO SOURCE VERSION TIME' + String.fromCharCode(1));
             } else {
-                namespace = (command.params[0].toLowerCase() == this.irc_connection.nick.toLowerCase()) ? 'user' : 'channel';
-                this.irc_connection.emit(namespace + ' ' + command.nick + ' ctcp_request', {
+                namespace = (command.params[0].toLowerCase() === this.state.options.nick.toLowerCase()) ? 'user' : 'channel';
+                this.emit(namespace + ' ' + command.nick + ' ctcp_request', {
                     nick: command.nick,
                     ident: command.ident,
                     hostname: command.hostname,
@@ -650,8 +659,8 @@ handlers = {
             }
         } else {
             // A message to a user (private message) or to a channel?
-            namespace = (command.params[0].toLowerCase() == this.irc_connection.nick.toLowerCase()) ? 'user ' + command.nick : 'channel ' + command.params[0];
-            this.irc_connection.emit(namespace + ' privmsg', {
+            namespace = (command.params[0].toLowerCase() === this.state.options.nick.toLowerCase()) ? 'user ' + command.nick : 'channel ' + command.params[0];
+            this.emit(namespace + ' privmsg', {
                 nick: command.nick,
                 ident: command.ident,
                 hostname: command.hostname,
@@ -671,7 +680,7 @@ handlers = {
         // Which capabilities we want to enable
         var want = ['multi-prefix', 'away-notify', 'server-time', 'znc.in/server-time-iso', 'znc.in/server-time'];
 
-        if (this.irc_connection.password) {
+        if (this.state.options.password) {
             want.push('sasl');
         }
 
@@ -720,7 +729,7 @@ handlers = {
     },
 
     'AUTHENTICATE': function (command) {
-        var b = new Buffer(this.irc_connection.nick + "\0" + this.irc_connection.nick + "\0" + this.irc_connection.password, 'utf8');
+        var b = new Buffer(this.state.options.nick + "\0" + this.state.options.nick + "\0" + this.client.options.password, 'utf8');
         var b64 = b.toString('base64');
         if (command.params[0] === '+') {
             while (b64.length >= 400) {
@@ -744,7 +753,7 @@ handlers = {
         // Check if we have a server-time
         time = getServerTime.call(this, command);
 
-        this.irc_connection.emit('user ' + command.nick + ' away', {
+        this.emit('user ' + command.nick + ' away', {
             nick: command.nick,
             msg: command.trailing,
             time: time
@@ -778,44 +787,44 @@ handlers = {
     },
 
     'ERROR': function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' error', {
+        this.emit('server ' + this.state.options.host + ' error', {
             reason: command.trailing
         });
     },
     ERR_PASSWDMISMATCH: function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' password_mismatch', {});
+        this.emit('server ' + this.state.options.host + ' password_mismatch', {});
     },
 
     ERR_LINKCHANNEL: function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' channel_redirect', {
+        this.emit('server ' + this.state.options.host + ' channel_redirect', {
             from: command.params[1],
             to: command.params[2]
         });
     },
 
     ERR_NOSUCHNICK: function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' no_such_nick', {
+        this.emit('server ' + this.state.options.host + ' no_such_nick', {
             nick: command.params[1],
             reason: command.trailing
         });
     },
 
     ERR_CANNOTSENDTOCHAN: function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' cannot_send_to_chan', {
+        this.emit('server ' + this.state.options.host + ' cannot_send_to_chan', {
             channel: command.params[1],
             reason: command.trailing
         });
     },
 
     ERR_TOOMANYCHANNELS: function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' too_many_channels', {
+        this.emit('server ' + this.state.options.host + ' too_many_channels', {
             channel: command.params[1],
             reason: command.trailing
         });
     },
 
     ERR_USERNOTINCHANNEL: function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' user_not_in_channel', {
+        this.emit('server ' + this.state.options.host + ' user_not_in_channel', {
             nick: command.params[0],
             channel: command.params[1],
             reason: command.trailing
@@ -823,63 +832,63 @@ handlers = {
     },
 
     ERR_NOTONCHANNEL: function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' not_on_channel', {
+        this.emit('server ' + this.state.options.host + ' not_on_channel', {
             channel: command.params[1],
             reason: command.trailing
         });
     },
 
     ERR_USERONCHANNEL: function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' user_on_channel', {
+        this.emit('server ' + this.state.options.host + ' user_on_channel', {
             nick: command.params[1],
             channel: command.params[2]
         });
     },
 
     ERR_CHANNELISFULL: function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' channel_is_full', {
+        this.emit('server ' + this.state.options.host + ' channel_is_full', {
             channel: command.params[1],
             reason: command.trailing
         });
     },
 
     ERR_INVITEONLYCHAN: function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' invite_only_channel', {
+        this.emit('server ' + this.state.options.host + ' invite_only_channel', {
             channel: command.params[1],
             reason: command.trailing
         });
     },
 
     ERR_BANNEDFROMCHAN: function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' banned_from_channel', {
+        this.emit('server ' + this.state.options.host + ' banned_from_channel', {
             channel: command.params[1],
             reason: command.trailing
         });
     },
 
     ERR_BADCHANNELKEY: function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' bad_channel_key', {
+        this.emit('server ' + this.state.options.host + ' bad_channel_key', {
             channel: command.params[1],
             reason: command.trailing
         });
     },
 
     ERR_CHANOPRIVSNEEDED: function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' chanop_privs_needed', {
+        this.emit('server ' + this.state.options.host + ' chanop_privs_needed', {
             channel: command.params[1],
             reason: command.trailing
         });
     },
 
     ERR_NICKNAMEINUSE: function (command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' nickname_in_use', {
+        this.emit('server ' + this.state.options.host + ' nickname_in_use', {
             nick: command.params[1],
             reason: command.trailing
         });
     },
 
     ERR_ERRONEUSNICKNAME: function(command) {
-        this.irc_connection.emit('server ' + this.irc_connection.irc_host.hostname + ' erroneus_nickname', {
+        this.emit('server ' + this.state.options.host + ' erroneus_nickname', {
             nick: command.params[1],
             reason: command.trailing
         });
@@ -987,7 +996,7 @@ function genericNotice (command, msg, is_error) {
     if (typeof is_error !== 'boolean')
         is_error = true;
 
-    this.irc_connection.clientEvent('notice', {
+    this.client_event('notice', {
         from_server: true,
         nick: command.prefix,
         ident: '',

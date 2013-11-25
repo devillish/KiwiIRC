@@ -1,10 +1,10 @@
-var util        = require('util'),
-    EventBinder = require('./eventbinder.js'),
+var EventBinder = require('./eventbinder.js'),
     IrcUser     = require('./user.js');
 
-var IrcChannel = function(irc_connection, name) {
-    this.irc_connection = irc_connection;
+var IrcChannel = function(irc_commands, name, clientEvent) {
+    this.irc_commands = irc_commands;
     this.name = name;
+    this.clientEvent = clientEvent;
 
     this.members = [];
     this.ban_list_buffer = [];
@@ -27,7 +27,7 @@ var IrcChannel = function(irc_connection, name) {
         topicsetby:     onTopicSetBy,
         mode:           onMode
     };
-    EventBinder.bindIrcEvents('channel ' + this.name, this.irc_events, this, irc_connection);
+    EventBinder.bindIrcEvents('channel ' + this.name, this.irc_events, this, irc_commands);
 };
 
 
@@ -35,14 +35,14 @@ module.exports = IrcChannel;
 
 
 IrcChannel.prototype.dispose = function (){
-    EventBinder.unbindIrcEvents('channel ' + this.name, this.irc_events, this.irc_connection);
+    EventBinder.unbindIrcEvents('channel ' + this.name, this.irc_events, this.irc_commands);
     this.irc_connection = undefined;
 };
 
 
 
 function onJoin(event) {
-    this.irc_connection.clientEvent('join', {
+    this.clientEvent('join', {
         channel: this.name,
         nick: event.nick,
         ident: event.ident,
@@ -53,7 +53,7 @@ function onJoin(event) {
 
 
 function onPart(event) {
-    this.irc_connection.clientEvent('part', {
+    this.clientEvent('part', {
         nick: event.nick,
         ident: event.ident,
         hostname: event.hostname,
@@ -65,7 +65,7 @@ function onPart(event) {
 
 
 function onKick(event) {
-    this.irc_connection.clientEvent('kick', {
+    this.clientEvent('kick', {
         kicked: event.kicked,  // Nick of the kicked
         nick: event.nick, // Nick of the kicker
         ident: event.ident,
@@ -78,7 +78,7 @@ function onKick(event) {
 
 
 function onQuit(event) {
-    this.irc_connection.clientEvent('quit', {
+    this.clientEvent('quit', {
         nick: event.nick,
         ident: event.ident,
         hostname: event.hostname,
@@ -89,7 +89,7 @@ function onQuit(event) {
 
 
 function onMsg(event) {
-    this.irc_connection.clientEvent('msg', {
+    this.clientEvent('msg', {
         nick: event.nick,
         ident: event.ident,
         hostname: event.hostname,
@@ -101,7 +101,7 @@ function onMsg(event) {
 
 
 function onNotice(event) {
-    this.irc_connection.clientEvent('notice', {
+    this.clientEvent('notice', {
         from_server: event.from_server,
         nick: event.nick,
         ident: event.ident,
@@ -114,7 +114,7 @@ function onNotice(event) {
 
 
 function onCtcpRequest(event) {
-    this.irc_connection.clientEvent('ctcp_request', {
+    this.clientEvent('ctcp_request', {
         nick: event.nick,
         ident: event.ident,
         hostname: event.hostname,
@@ -127,7 +127,7 @@ function onCtcpRequest(event) {
 
 
 function onCtcpResponse(event) {
-    this.irc_connection.clientEvent('ctcp_response', {
+    this.clientEvent('ctcp_response', {
         nick: event.nick,
         ident: event.ident,
         hostname: event.hostname,
@@ -141,7 +141,7 @@ function onCtcpResponse(event) {
 
 // TODO: Split event.users into batches of 50
 function onNicklist(event) {
-    this.irc_connection.clientEvent('userlist', {
+    this.clientEvent('userlist', {
         users: event.users,
         channel: this.name
     });
@@ -151,7 +151,7 @@ function onNicklist(event) {
 
 
 function onNicklistEnd(event) {
-    this.irc_connection.clientEvent('userlist_end', {
+    this.clientEvent('userlist_end', {
         users: event.users,
         channel: this.name
     });
@@ -172,7 +172,7 @@ function updateUsersList(users) {
 
 
 function onTopic(event) {
-    this.irc_connection.clientEvent('topic', {
+    this.clientEvent('topic', {
         nick: event.nick,
         channel: this.name,
         topic: event.topic,
@@ -194,14 +194,14 @@ function onBanListEnd(event) {
 }
 
 function onTopic(event) {
-    this.irc_connection.clientEvent('topic', {
+    this.clientEvent('topic', {
         channel: event.channel,
         topic: event.topic
     });
 }
 
 function onTopicSetBy(event) {
-    this.irc_connection.clientEvent('topicsetby', {
+    this.clientEvent('topicsetby', {
         nick: event.nick,
         channel: event.channel,
         when: event.when
@@ -209,7 +209,7 @@ function onTopicSetBy(event) {
 }
 
 function onMode(event) {
-    this.irc_connection.clientEvent('mode', {
+    this.clientEvent('mode', {
         target: event.target,
         nick: event.nick,
         modes: event.modes,

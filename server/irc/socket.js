@@ -156,7 +156,7 @@ function connect(options) {
             that.emit('error', event);
         });
 
-        that.socket.once('data', function (data) {
+        that.socket.on('data', function (data) {
             var pause;
             // Avoid pushing null as that ends the stream.
             if (data !== null) {

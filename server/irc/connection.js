@@ -1,30 +1,24 @@
 var util            = require('util'),
-    _               = require('lodash'),
-    EventBinder     = require('./eventbinder.js'),
+    events          = require('events'),
     IrcSocket       = require('./socket.js'),
-    IrcServer       = require('./server.js'),
-    IrcCommands     = require('./commands.js'),
-    IrcChannel      = require('./channel.js'),
-    IrcUser         = require('./user.js'),
-    EE              = require('../ee.js'),
+    _               = require('lodash'),
     iconv           = require('iconv-lite');
 
 
-var IrcConnection = function (hostname, port, ssl, nick, user, options, state, con_num) {
-    var that = this;
+var IrcConnection = function (options) {
+    events.EventEmitter.call(this);
 
-    EE.call(this,{
-        wildcard: true,
-        delimiter: ' '
+    options = _.defaults(options, {
+        host: 'localhost',
+        port: 6667,
+        ssl: false,
+        encoding: 'utf8'
     });
-    this.setMaxListeners(0);
-
-    options = options || {};
 
     // Socket state
     this.connected = false;
 
-    // IRCd write buffers (flood controll)
+    // IRCd write buffers (flood control)
     this.write_buffer = [];
 
     // In process of writing the buffer?
@@ -40,8 +34,8 @@ var IrcConnection = function (hostname, port, ssl, nick, user, options, state, c
     this.cap_negotiation = true;
 
     // User information
-    this.nick = nick;
-    this.user = user;  // Contains users real hostname and address
+    this.nick = options.nick;
+    this.user = options.user;  // Contains users real hostname and address
     this.username = this.nick.replace(/[^0-9a-zA-Z\-_.\/]/, '');
     this.password = options.password || '';
 
@@ -50,40 +44,14 @@ var IrcConnection = function (hostname, port, ssl, nick, user, options, state, c
         this.setEncoding(global.config.default_encoding);
     }
 
-    // State object
-    this.state = state;
-
-    // Connection ID in the state
-    this.con_num = con_num;
-
-    // IRC protocol handling
-    this.irc_commands = new IrcCommands(this);
-
-    // IrcServer object
-    this.server = new IrcServer(this, hostname, port);
-
-    // IrcUser objects
-    this.irc_users = Object.create(null);
-
-    // TODO: use `this.nick` instead of `'*'` when using an IrcUser per nick
-    this.irc_users[this.nick] = new IrcUser(this, '*');
-
-    // IrcChannel objects
-    this.irc_channels = Object.create(null);
-
     // IRC connection information
-    this.irc_host = {hostname: hostname, port: port};
-    this.ssl = !(!ssl);
+    this.irc_host = {hostname: options.host, port: options.port};
+    this.ssl = !(!options.ssl);
 
     // SOCKS proxy details
     // TODO: Wildcard matching of hostnames and/or CIDR ranges of IP addresses
-    if ((global.config.socks_proxy && global.config.socks_proxy.enabled) && ((global.config.socks_proxy.all) || (_.contains(global.config.socks_proxy.proxy_hosts, this.irc_host.hostname)))) {
-        this.socks = {
-            host: global.config.socks_proxy.address,
-            port: global.config.socks_proxy.port,
-            user: global.config.socks_proxy.user,
-            pass: global.config.socks_proxy.pass
-        };
+    if ((options.socks) && ((global.config.socks_proxy.all) || (_.contains(global.config.socks_proxy.proxy_hosts, options.host)))) {
+        this.socks = options.socks;
     } else {
         this.socks = false;
     }
@@ -101,31 +69,11 @@ var IrcConnection = function (hostname, port, ssl, nick, user, options, state, c
     // Buffers for data sent from the IRCd
     this.hold_last = false;
     this.held_data = null;
-
-    this.applyIrcEvents();
 };
-util.inherits(IrcConnection, EE);
+util.inherits(IrcConnection, events.EventEmitter);
 
-module.exports.IrcConnection = IrcConnection;
+module.exports = IrcConnection;
 
-
-
-IrcConnection.prototype.applyIrcEvents = function () {
-    // Listen for events on the IRC connection
-    this.irc_events = {
-        'server * connect':  onServerConnect,
-        'channel * join':    onChannelJoin,
-
-        // TODO: uncomment when using an IrcUser per nick
-        //'user:*:privmsg':    onUserPrivmsg,
-        'user * nick':       onUserNick,
-        'channel * part':    onUserParts,
-        'channel * quit':    onUserParts,
-        'channel * kick':    onUserKick
-    };
-
-    EventBinder.bindIrcEvents('', this.irc_events, this, this);
-};
 
 
 /**
@@ -148,7 +96,7 @@ IrcConnection.prototype.connect = function () {
         that.emit('error', event);
     });
 
-    that.socket.on('data', function () {
+    that.socket.on('data', function socketDataCb() {
         socketOnData.apply(that, arguments);
     });
 
@@ -162,21 +110,13 @@ IrcConnection.prototype.connect = function () {
 };
 
 /**
- * Send an event to the client
- */
-IrcConnection.prototype.clientEvent = function (event_name, data, callback) {
-    data.server = this.con_num;
-    this.state.sendIrcCommand(event_name, data, callback);
-};
-
-/**
  * Write a line of data to the IRCd
  * @param data The line of data to be sent
  * @param force Write the data now, ignoring any write queue
  */
 IrcConnection.prototype.write = function (data, force) {
     //ENCODE string to encoding of the server
-    encoded_buffer = iconv.encode(data + '\r\n', this.encoding);
+    var encoded_buffer = iconv.encode(data + '\r\n', this.encoding);
 
     if (force) {
         this.socket.write(encoded_buffer);
@@ -186,8 +126,9 @@ IrcConnection.prototype.write = function (data, force) {
     this.write_buffer.push(encoded_buffer);
 
     // Only flush if we're not writing already
-    if (!this.writing_buffer)
+    if (!this.writing_buffer) {
         this.flushWriteBuffer();
+    }
 };
 
 
@@ -208,7 +149,7 @@ IrcConnection.prototype.flushWriteBuffer = function () {
 
     // Disabled write buffer? Send everything we have
     if (!this.write_buffer_lines_second) {
-        this.write_buffer.forEach(function(buffer, idx) {
+        this.write_buffer.forEach(function(buffer) {
             this.socket.write(buffer);
             this.write_buffer = null;
         });
@@ -243,13 +184,15 @@ IrcConnection.prototype.flushWriteBuffer = function () {
  * Close the connection to the IRCd after forcing one last line
  */
 IrcConnection.prototype.end = function (data, callback) {
-    if (!this.socket)
+    if (!this.socket) {
         return;
+    }
 
-    if (data)
+    if (data) {
         this.write(data, true);
+    }
 
-    this.socket.end();
+    this.socket.end(callback);
 };
 
 
@@ -268,22 +211,6 @@ IrcConnection.prototype.dispose = function () {
     if (this.socket) {
         this.disposeSocket();
     }
-
-    _.each(this.irc_users, function (user) {
-        user.dispose();
-    });
-    _.each(this.irc_channels, function (chan) {
-        chan.dispose();
-    });
-    this.irc_users = undefined;
-    this.irc_channels = undefined;
-
-    this.server.dispose();
-    this.server = undefined;
-
-    this.irc_commands = undefined;
-
-    EventBinder.unbindIrcEvents('', this.irc_events, this);
 
     this.removeAllListeners();
 };
@@ -314,7 +241,7 @@ IrcConnection.prototype.setEncoding = function (encoding) {
         //This test is done to check if this encoding also supports
         //the ASCII charset required by the IRC protocols
         //(Avoid the use of base64 or incompatible encodings)
-        if (encoded_test == "TEST") {
+        if (encoded_test === "TEST") {
             this.encoding = encoding;
             return true;
         }
@@ -325,85 +252,10 @@ IrcConnection.prototype.setEncoding = function (encoding) {
 };
 
 
-
-function onChannelJoin(event) {
-    var chan;
-
-    // Only deal with ourselves joining a channel
-    if (event.nick !== this.nick)
-        return;
-
-    // We should only ever get a JOIN command for a channel
-    // we're not already a member of.. but check we don't
-    // have this channel in case something went wrong somewhere
-    // at an earlier point
-    if (!this.irc_channels[event.channel]) {
-        chan = new IrcChannel(this, event.channel);
-        this.irc_channels[event.channel] = chan;
-        chan.irc_events.join.call(chan, event);
-    }
-}
-
-
-function onServerConnect(event) {
-    this.nick = event.nick;
-}
-
-
-function onUserPrivmsg(event) {
-    var user;
-
-    // Only deal with messages targetted to us
-    if (event.channel !== this.nick)
-        return;
-
-    if (!this.irc_users[event.nick]) {
-        user = new IrcUser(this, event.nick);
-        this.irc_users[event.nick] = user;
-        user.irc_events.privmsg.call(user, event);
-    }
-}
-
-
-function onUserNick(event) {
-    var user;
-
-    // Only deal with messages targetted to us
-    if (event.nick !== this.nick)
-        return;
-
-    this.nick = event.newnick;
-}
-
-
-function onUserParts(event) {
-    // Only deal with ourselves leaving a channel
-    if (event.nick !== this.nick)
-        return;
-
-    if (this.irc_channels[event.channel]) {
-        this.irc_channels[event.channel].dispose();
-        delete this.irc_channels[event.channel];
-    }
-}
-
-function onUserKick(event){
-    // Only deal with ourselves being kicked from a channel
-    if (event.kicked !== this.nick)
-        return;
-
-    if (this.irc_channels[event.channel]) {
-        this.irc_channels[event.channel].dispose();
-        delete this.irc_channels[event.channel];
-    }
-
-}
-
-
 /**
  * Handle the socket connect event, starting the IRCd registration
  */
-var socketConnectHandler = function () {
+function socketConnectHandler() {
     var that = this,
         connect_data;
 
@@ -434,15 +286,16 @@ var socketConnectHandler = function () {
 
         that.write('CAP LS');
 
-        if (that.password)
+        if (that.password) {
             that.write('PASS ' + that.password);
+        }
 
         that.write('NICK ' + that.nick);
         that.write('USER ' + that.username + ' 0 0 :' + gecos);
 
         that.emit('connected');
     });
-};
+}
 
 
 
@@ -469,12 +322,13 @@ function findWebIrc(connect_data) {
     // Check if we need to pass the users IP as its username/ident
     if (ip_as_username && ip_as_username.indexOf(this.irc_host.hostname) > -1) {
         // Get a hex value of the clients IP
-        this.username = this.user.address.split('.').map(function ipSplitMapCb(i, idx){
+        this.username = this.user.address.split('.').map(function ipSplitMapCb(i){
             var hex = parseInt(i, 10).toString(16);
 
             // Pad out the hex value if it's a single char
-            if (hex.length === 1)
+            if (hex.length === 1) {
                 hex = '0' + hex;
+            }
 
             return hex;
         }).join('');
@@ -492,7 +346,7 @@ function socketOnData(data) {
     var data_pos,               // Current position within the data Buffer
         line_start = 0,
         lines = [],
-        line = '',
+        i,
         max_buffer_size = 1024; // 1024 bytes is the maximum length of two RFC1459 IRC messages.
                                 // May need tweaking when IRCv3 message tags are more widespread
 
@@ -549,9 +403,9 @@ function socketOnData(data) {
     }
 
     // Process our data line by line
-    for (i = 0; i < lines.length; i++)
+    for (i = 0; i < lines.length; i++) {
         parseIrcLine.call(this, lines[i]);
-
+    }
 }
 
 
@@ -565,14 +419,16 @@ var parse_regex = /^(?:(?:(?:@([^ ]+) )?):(?:([a-z0-9\x5B-\x60\x7B-\x7D\.\-*]+)|
 
 function parseIrcLine(buffer_line) {
     var msg,
-        i, j,
+        i,
         tags = [],
         tag,
         line = '';
 
     // Decode server encoding
     line = iconv.decode(buffer_line, this.encoding);
-    if (!line) return;
+    if (!line) {
+        return;
+    }
 
     // Parse the complete line, removing any carriage returns
     msg = parse_regex.exec(line.replace(/^\r+|\r+$/, ''));
@@ -587,9 +443,9 @@ function parseIrcLine(buffer_line) {
     if (msg[1]) {
         tags = msg[1].split(';');
 
-        for (j = 0; j < tags.length; j++) {
-            tag = tags[j].split('=');
-            tags[j] = {tag: tag[0], value: tag[1]};
+        for (i = 0; i < tags.length; i++) {
+            tag = tags[i].split('=');
+            tags[i] = {tag: tag[0], value: tag[1]};
         }
     }
 
@@ -605,5 +461,5 @@ function parseIrcLine(buffer_line) {
     };
 
     msg.params = msg.params.split(' ');
-    this.irc_commands.dispatch(msg.command.toUpperCase(), msg);
+    this.emit('msg', msg.command.toUpperCase(), msg);
 }
